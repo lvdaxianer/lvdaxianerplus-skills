@@ -75,6 +75,38 @@ Automatically formats and cleans up code after AI generates it.
 Use the code-formatting-after-ai-generation skill
 ```
 
+### 3. Save Key Points to Context
+
+Automatically saves key points to your project's `.ai/context.md` when you input "重点：" in the project.
+
+**Features:**
+- Supports general and modular key points
+- AI understands and refines the content before saving, requires user confirmation
+- Modular key points update both general and module-specific files
+- Organized by date automatically
+
+**Input Formats:**
+| Input Format | Save Location | Example |
+|-------------|---------------|---------|
+| `重点：xxx` | `.ai/context.md` | 重点：This is a general key point |
+| `重点-模块名：xxx` | `.ai/模块名-context.md` + `.ai/context.md` | 重点-editor：Editor related key point |
+
+**Usage:**
+
+```bash
+Use the save-context-note skill
+# Or directly input
+重点：All APIs must return unified response format
+重点-editor：Editor text must use Virtual DOM for efficient rendering
+```
+
+**Common Module Names:**
+- `editor` - Editor related
+- `api` - API design related
+- `db` - Database related
+- `auth` - Authentication related
+- `config` - Configuration related
+
 ## How to Install
 
 ### Install Commands
@@ -122,7 +154,8 @@ lvdaxianerplus-ai/
 ├── commands/
 │   └── git-merge.md      # Git merge command
 ├── skills/
-│   └── formatting-code/  # Code formatting skill
+│   ├── formatting-code/  # Code formatting skill
+│   └── save-context/    # Save key points skill
 ├── README.md             # English documentation
 ├── README-zh.md          # Chinese documentation
 └── LICENSE               # MIT License

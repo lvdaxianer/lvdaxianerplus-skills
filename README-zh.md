@@ -73,6 +73,38 @@
 使用 code-formatting-after-ai-generation 技能
 ```
 
+### 3. 保存重点到 Context 文件
+
+当用户在项目中输入"重点："时，自动将重点保存到项目的 `.ai/context.md` 文件中。
+
+**功能：**
+- 支持通用重点和模块化重点
+- 写入前 AI 理解并提炼要点，用户确认后再写入
+- 模块化重点同时更新通用文件和模块专属文件
+- 按日期分组，自动管理文件结构
+
+**使用格式：**
+| 输入格式 | 保存位置 | 示例 |
+|---------|---------|------|
+| `重点：xxx` | `.ai/context.md` | 重点：这是通用重点 |
+| `重点-模块名：xxx` | `.ai/模块名-context.md` + `.ai/context.md` | 重点-editor：编辑器相关重点 |
+
+**使用方法：**
+
+```bash
+使用 save-context-note 技能
+# 或直接输入
+重点：所有接口必须返回统一的响应格式
+重点-editor：编辑器文本必须使用 Virtual DOM 进行高效渲染
+```
+
+**常用模块名：**
+- `editor` - 编辑器相关
+- `api` - API 设计相关
+- `db` - 数据库相关
+- `auth` - 认证授权相关
+- `config` - 配置相关
+
 ## 如何安装
 
 ### 安装命令
@@ -120,7 +152,8 @@ lvdaxianerplus-ai/
 ├── commands/
 │   └── git-merge.md      # Git 合并命令
 ├── skills/
-│   └── formatting-code/  # 代码格式化技能
+│   ├── formatting-code/  # 代码格式化技能
+│   └── save-context/    # 保存重点技能
 ├── README.md             # 英文文档
 ├── README-zh.md          # 中文文档
 └── LICENSE               # MIT 许可证
