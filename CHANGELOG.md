@@ -6,7 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- 更新 README 文档，添加 save-context skill 说明 (b58b022)
+
 ### Added
+- 添加 AI 理解与用户确认流程 (7a0e9a4)
+
+- 添加 save-context skill 最佳实践案例 (69221a9)
+
+### Added
+- 更新 save-context skill，触发词改为"重点"，支持双文件更新 (ab12bf8)
+
+- 添加 save-context-note skill，支持保存注意事项到 .ai/context (50003b8)
+
+### Added
+- 更新 git-merge 命令，添加 AI 辅助选择提交功能 (8bd7ed6)
+
 - 更新 git-merge 命令文档 (ecbd9e7)
 
 ### Added
