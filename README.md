@@ -53,7 +53,43 @@ Selective commit merging tool with two modes:
 | `--count` | `-c` | Number of commits | No (quick mode) |
 | `--mode` | `-m` | Merge mode: `pick`/`rebase` | No (default: pick) |
 
-### 2. Code Formatting After AI Generation
+### 2. Requirement Discussion Command
+
+Interactive requirement gathering command that collects key information through guided questions.
+
+**Features:**
+- 10 popular roles with 10 scenario questions each
+- Collects: role, use case, role-specific considerations, priority, acceptance criteria
+- Additional options: deadline, budget, third-party dependencies, other constraints
+- Saves to `.ai/requirements-[功能].md` (e.g., `.ai/requirements-login.md`)
+- Quick mode and interactive mode
+
+**Roles Supported:**
+1. Developer (程序员)
+2. Journalist (记者)
+3. Product Manager (产品经理)
+4. Designer (设计师)
+5. Operations (运营人员)
+6. Data Analyst (数据分析师)
+7. QA Engineer (测试工程师)
+8. Project Manager (项目经理)
+9. Marketing (营销人员)
+10. Customer Support (客服人员)
+
+**Usage:**
+
+```bash
+# Interactive mode (recommended)
+/discuss                    # Start interactive requirement discussion
+/discuss 用户登录接口      # Quick mode with requirement overview
+```
+
+**Quick Mode Example:**
+```bash
+/discuss 程序员场景：用户登录接口，高并发，注意事项：登录失败次数限制，优先级P0，验收标准：登录成功率99.9%
+```
+
+### 3. Code Formatting After AI Generation
 
 Automatically formats and cleans up code after AI generates it.
 
@@ -75,7 +111,7 @@ Automatically formats and cleans up code after AI generates it.
 Use the code-formatting-after-ai-generation skill
 ```
 
-### 3. Save Key Points to Context
+### 4. Save Key Points to Context
 
 Automatically saves key points to your project's `.ai/context.md` when you input "重点：" in the project.
 
@@ -152,7 +188,8 @@ Use the code-formatting-after-ai-generation skill
 ```
 lvdaxianerplus-ai/
 ├── commands/
-│   └── git-merge.md      # Git merge command
+│   ├── git-merge.md      # Git merge command
+│   └── discuss.md        # Requirement discussion command
 ├── skills/
 │   ├── formatting-code/  # Code formatting skill
 │   └── save-context/    # Save key points skill
