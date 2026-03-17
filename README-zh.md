@@ -92,7 +92,7 @@
 **使用方法：**
 
 ```bash
-使用 save-context-note 技能
+使用 save-context 命令
 # 或直接输入
 重点：所有接口必须返回统一的响应格式
 重点-editor：编辑器文本必须使用 Virtual DOM 进行高效渲染
@@ -150,10 +150,11 @@ cp -r skills/formatting-code <你的项目>/.claude/skills/
 ```
 lvdaxianerplus-ai/
 ├── commands/
-│   └── git-merge.md      # Git 合并命令
+│   ├── git-merge.md      # Git 合并命令
+│   ├── discuss.md        # 需求讨论命令
+│   └── save-context.md  # 保存重点命令
 ├── skills/
-│   ├── formatting-code/  # 代码格式化技能
-│   └── save-context/    # 保存重点技能
+│   └── formatting-code/ # 代码格式化技能
 ├── README.md             # 英文文档
 ├── README-zh.md          # 中文文档
 └── LICENSE               # MIT 许可证

@@ -130,7 +130,7 @@ Automatically saves key points to your project's `.ai/context.md` when you input
 **Usage:**
 
 ```bash
-Use the save-context-note skill
+Use the save-context command
 # Or directly input
 重点：All APIs must return unified response format
 重点-editor：Editor text must use Virtual DOM for efficient rendering
@@ -188,11 +188,11 @@ Use the code-formatting-after-ai-generation skill
 ```
 lvdaxianerplus-ai/
 ├── commands/
-│   ├── git-merge.md      # Git merge command
-│   └── discuss.md        # Requirement discussion command
+│   ├── git-merge.md       # Git merge command
+│   ├── discuss.md        # Requirement discussion command
+│   └── save-context.md   # Save key points command
 ├── skills/
-│   ├── formatting-code/  # Code formatting skill
-│   └── save-context/    # Save key points skill
+│   └── formatting-code/  # Code formatting skill
 ├── README.md             # English documentation
 ├── README-zh.md          # Chinese documentation
 └── LICENSE               # MIT License
