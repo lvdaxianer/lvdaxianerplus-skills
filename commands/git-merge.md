@@ -1,94 +1,98 @@
-# Claude 命令: Git Merge
+---
+description: AI-assisted code merging tool that analyzes commit history and intelligently recommends commits to merge
+---
 
-AI 辅助的代码合并工具。通过 AI 分析提交历史和代码变更，智能推荐需要合并的提交，让选择性合并更高效。
+# Claude Command: Git Merge
 
-## 使用方法
+AI-assisted code merging tool. Analyzes commit history and code changes through AI, intelligently recommends commits to merge, making selective merging more efficient.
 
-### 快速模式（推荐）
+## Usage
 
-```bash
-/git-merge -t main                    # 从当前分支合并1个提交到 main（默认 -c=1）
-/git-merge -t main -c 2               # 从当前分支合并2个提交到 main
-/git-merge -t main -c 3 -m rebase    # 使用 rebase 模式，合并3个提交
-/git-merge -s feature-A -t main       # 从 feature-A 合并1个提交到 main
-/git-merge -s feature-A -t main -c 2  # 从 feature-A 合并2个提交到 main
-```
-
-### 交互模式
+### Quick Mode (Recommended)
 
 ```bash
-/git-merge                    # 完全交互式选择
+/git-merge -t main                    # Merge 1 commit from current branch to main (default -c=1)
+/git-merge -t main -c 2               # Merge 2 commits from current branch to main
+/git-merge -t main -c 3 -m rebase    # Use rebase mode, merge 3 commits
+/git-merge -s feature-A -t main       # Merge 1 commit from feature-A to main
+/git-merge -s feature-A -t main -c 2  # Merge 2 commits from feature-A to main
 ```
 
-## 参数
+### Interactive Mode
 
-| 参数 | 简写 | 描述 | 值 | 必填 | 默认值 |
-|------|------|------|-----|------|--------|
-| `--target` | `-t` | 目标分支（合并到的分支） | 分支名 | 快速模式必填* | 无 |
-| `--source` | `-s` | 源分支（包含要合并的提交） | 分支名 | 否 | 当前分支 |
-| `--count` | `-c` | 要合并的最近提交数量 | 数字 | 否 | 1 |
-| `--mode` | `-m` | 合并方式 | `pick` / `rebase` | 否 | `pick` |
-
-*快速模式下必填（当提供 -t 时）
-
-### --mode 取值
-
-| 值 | 描述 |
-|----|------|
-| `pick` | Cherry-pick，不会更改目标分支历史（默认） |
-| `rebase` | 变基到目标分支，直线历史 |
-
-## 参数处理逻辑
-
-### 模式判断
-
-```
-如果提供了 -t/--target：
-    → 快速模式
-否则：
-    → 交互模式（纯 /git-merge）
+```bash
+/git-merge                    # Full interactive selection
 ```
 
-### 快速模式逻辑
+## Arguments
+
+| Argument | Short | Description | Values | Required | Default |
+|----------|-------|-------------|--------|----------|---------|
+| `--target` | `-t` | Target branch (branch to merge into) | branch name | Yes in quick mode* | none |
+| `--source` | `-s` | Source branch (containing commits to merge) | branch name | No | current branch |
+| `--count` | `-c` | Number of recent commits to merge | number | No | 1 |
+| `--mode` | `-m` | Merge method | `pick` / `rebase` | No | `pick` |
+
+*Required in quick mode (when -t is provided)
+
+### --mode Values
+
+| Value | Description |
+|-------|-------------|
+| `pick` | Cherry-pick, does not change target branch history (default) |
+| `rebase` | Rebase onto target branch, linear history |
+
+## Argument Processing Logic
+
+### Mode Detection
 
 ```
-1. -t/--target 必填 → 未提供则报错
-2. -s/--source 可选，默认为当前分支
-3. -c/--count 可选，默认为 1
-4. -m/--mode 可选，默认为 pick
-5. 验证分支是否存在
-6. 获取提交列表（AI 分析提交内容）
-7. AI 推荐要合并的提交
-8. 执行合并
+If -t/--target is provided:
+    → Quick mode
+Else:
+    → Interactive mode (pure /git-merge)
 ```
 
-### 交互模式逻辑
+### Quick Mode Logic
 
 ```
-1. -s/--source → 下拉选择
-2. -t/--target → 下拉选择
-3. AI 分析源分支的提交历史和变更内容
-4. AI 智能推荐需要合并的提交（通过复选框多选）
-5. -m/--mode → 下拉选择
-6. 确认执行
-7. 执行合并
+1. -t/--target required → error if not provided
+2. -s/--source optional, defaults to current branch
+3. -c/--count optional, defaults to 1
+4. -m/--mode optional, defaults to pick
+5. Validate branch exists
+6. Get commit list (AI analyzes commit content)
+7. AI recommends commits to merge
+8. Execute merge
 ```
 
-## 步骤 1：预检查 - 验证 Git 仓库
+### Interactive Mode Logic
+
+```
+1. -s/--source → dropdown selection
+2. -t/--target → dropdown selection
+3. AI analyzes source branch commit history and change content
+4. AI intelligently recommends commits to merge (multi-select via checkboxes)
+5. -m/--mode → dropdown selection
+6. Confirm execution
+7. Execute merge
+```
+
+## Step 1: Pre-check - Validate Git Repository
 
 ```bash
 git rev-parse --is-inside-work-tree
 ```
 
-**如果不是 git 仓库：** 报错并退出。
+**If not a git repository:** Error and exit.
 
-## 步骤 2：获取分支列表
+## Step 2: Get Branch List
 
 ```bash
 git branch -a --format='%(refname:short)'
 ```
 
-## 步骤 3：获取当前分支
+## Step 3: Get Current Branch
 
 ```bash
 git branch --show-current
@@ -96,283 +100,283 @@ git branch --show-current
 
 ---
 
-## 快速模式执行流程
+## Quick Mode Execution Flow
 
-### 步骤 A1：验证参数
+### Step A1: Validate Arguments
 
 ```bash
-# 验证目标分支存在
+# Validate target branch exists
 git show-ref --verify --quiet refs/heads/<target>
 
-# 验证源分支存在（如果指定了）
+# Validate source branch exists (if specified)
 git show-ref --verify --quiet refs/heads/<source>
 
-# 验证数量是正整数（如果提供了）
+# Validate count is positive integer (if provided)
 [[ "<count>" =~ ^[1-9][0-9]*$ ]]
 ```
 
-### 步骤 A2：AI 分析提交
+### Step A2: AI Analyze Commits
 
 ```bash
-# 从源分支获取最近 N 个提交
+# Get recent N commits from source branch
 git log <source> --oneline -<count> --format='%h|%s|%ad|%an' --date=short
 ```
 
-**AI 分析内容：**
-- 读取每个提交的 diff 内容
-- 分析提交之间的关联性
-- 识别功能模块和变更范围
-- 推荐最可能需要合并的提交
+**AI Analysis Content:**
+- Read diff content of each commit
+- Analyze commit relationships
+- Identify functional modules and change scope
+- Recommend most likely commits to merge
 
-### 步骤 A3：AI 推荐提交
-
-```
-AI 分析结果：
-
-源分支最近 5 个提交：
-
-1. a1b2c3d feat(auth): 添加 JWT 验证中间件
-   变更文件：src/middleware/auth.js, src/utils/jwt.js
-   建议：✅ 推荐合并
-
-2. e4f5g6h fix: 修复登录页样式问题
-   变更文件：src/views/login.vue
-   建议：⚠️ 考虑合并
-
-3. i7j8k9l docs: 更新 API 文档
-   变更文件：docs/api.md
-   建议：❌ 通常不需要合并
-
-是否采纳 AI 建议？
-- 是：合并推荐的提交
-- 否：显示所有提交供手动选择
-```
-
-### 步骤 A4：简化确认
-
-快速模式可以直接执行，或带单次确认：
+### Step A3: AI Recommend Commits
 
 ```
-即将执行 Cherry-pick 合并：
+AI Analysis Results:
 
-源分支：<source>
-目标分支：<target>
-合并方式：<mode>
-提交数量：<count>
+Recent 5 commits on source branch:
 
-AI 推荐合并以下提交：
+1. a1b2c3d feat(auth): add JWT validation middleware
+   Changed files: src/middleware/auth.js, src/utils/jwt.js
+   Recommendation: ✅ Recommended
+
+2. e4f5g6h fix: fix login page style issue
+   Changed files: src/views/login.vue
+   Recommendation: ⚠️ Consider merging
+
+3. i7j8k9l docs: update API documentation
+   Changed files: docs/api.md
+   Recommendation: ❌ Usually not needed
+
+Accept AI recommendations?
+- Yes: Merge recommended commits
+- No: Show all commits for manual selection
+```
+
+### Step A4: Simplified Confirmation
+
+Quick mode can execute directly, or with single confirmation:
+
+```
+About to execute Cherry-pick merge:
+
+Source branch: <source>
+Target branch: <target>
+Merge method: <mode>
+Commit count: <count>
+
+AI recommends merging the following commits:
 - <hash1> <message1>
 - <hash2> <message2>
 - ...
 
-确认执行？是/否
+Confirm execution? Yes/No
 ```
 
-### 步骤 A5：执行合并
+### Step A5: Execute Merge
 
-#### Cherry-pick 模式（默认）
+#### Cherry-pick Mode (Default)
 
 ```bash
-# 切换到目标分支
+# Switch to target branch
 git checkout <target>
 
-# 一次性应用所有更改（不提交）
+# Apply all changes at once (without committing)
 git cherry-pick --no-commit <hash1> <hash2> ...
 
-# 检查冲突
+# Check for conflicts
 git status --porcelain | grep -E '^U'
 ```
 
-**如果没有冲突：**
+**If no conflicts:**
 ```bash
 git commit -m "merge: cherry-pick <n> commits from <source>"
 ```
 
-**如果存在冲突：**
-- 跳转到冲突处理流程
+**If conflicts exist:**
+- Jump to conflict handling flow
 
-#### Rebase 模式
+#### Rebase Mode
 
 ```bash
-# 切换到源分支
+# Switch to source branch
 git checkout <source>
 
-# 执行变基
+# Execute rebase
 git rebase <target>
 ```
 
-### 步骤 A6：冲突处理（Cherry-pick）
+### Step A6: Conflict Handling (Cherry-pick)
 
 ```bash
-# 显示冲突文件
+# Show conflict files
 git diff --name-only --diff-filter=U
 ```
 
-**冲突处理流程：**
+**Conflict Handling Flow:**
 
 ```
-⚠️ 检测到冲突！
+⚠️ Conflicts detected!
 
-冲突文件：
+Conflict files:
 - file1.js
 - file2.css
 
-解决步骤：
+Resolution steps:
 
-1. 编辑冲突文件，移除冲突标记
+1. Edit conflict files, remove conflict markers
 2. git add .
 3. git commit -m "merge: cherry-pick <n> commits from <source>"
 
-或者中止：
+Or abort:
 - git cherry-pick --abort
 ```
 
-### 步骤 A7：验证结果
+### Step A7: Verify Result
 
 ```bash
-# 显示已合并的提交历史
+# Show merged commit history
 git log --oneline -5
 
-# 如果当前分支被修改，检查状态
+# If current branch was modified, check status
 git status
 ```
 
 ---
 
-## 交互模式执行流程
+## Interactive Mode Execution Flow
 
-### 步骤 B1：选择源分支
+### Step B1: Select Source Branch
 
-下拉选择源分支：
-
-```
-选择源分支（包含要合并的提交的分支）：
-```
-
-**选项：** 所有本地分支
-
-### 步骤 B2：选择目标分支
-
-下拉选择目标分支：
+Dropdown to select source branch:
 
 ```
-选择目标分支（合并到的分支）：
+Select source branch (branch containing commits to merge):
 ```
 
-**选项：** 所有本地分支（排除源分支）
+**Options:** All local branches
 
-### 步骤 B3：AI 分析源分支提交
+### Step B2: Select Target Branch
+
+Dropdown to select target branch:
+
+```
+Select target branch (branch to merge into):
+```
+
+**Options:** All local branches (excluding source branch)
+
+### Step B3: AI Analyze Source Branch Commits
 
 ```bash
 git log <source> --oneline --format='%H|%s|%ai|%an' --date=short -n 50
 ```
 
-**AI 分析内容：**
+**AI Analysis Content:**
 
 ```
-AI 分析源分支提交：
+AI Analysis of Source Branch Commits:
 
-共发现 12 个提交，AI 智能分类：
+Found 12 commits, AI intelligently classifies:
 
-🟢 高相关性（建议优先合并）
-  - abc1234 feat(auth): 添加 JWT 验证中间件
-  - def5678 refactor(auth): 简化 token 验证逻辑
+🟢 High Relevance (recommended for priority merge)
+  - abc1234 feat(auth): add JWT validation middleware
+  - def5678 refactor(auth): simplify token validation logic
 
-🟡 中相关性（视情况合并）
-  - ghi9012 fix: 修复登录页样式问题
-  - jkl3456 style: 统一代码格式化
+🟡 Medium Relevance (merge as needed)
+  - ghi9012 fix: fix login page style issue
+  - jkl3456 style: unify code formatting
 
-🔴 低相关性（通常不合并）
-  - mno7890 docs: 更新 API 文档
-  - pqr1234 chore: 更新依赖版本
+🔴 Low Relevance (usually not merged)
+  - mno7890 docs: update API documentation
+  - pqr1234 chore: update dependency versions
 ```
 
-### 步骤 B4：AI 智能推荐提交
+### Step B4: AI Intelligently Recommend Commits
 
-**关键：AI 根据提交内容和关联性智能推荐**
+**Key: AI intelligently recommends based on commit content and relevance**
 
-复选框选择提交：
+Checkbox selection for commits:
 
 ```
-基于 AI 分析，推荐以下提交合并：
+Based on AI analysis, recommend merging the following commits:
 
-🟢 abc1234 feat(auth): 添加 JWT 验证中间件 (2024-01-15)
-   变更：src/middleware/auth.js, src/utils/jwt.js
-   原因：核心功能，与目标分支无冲突
+🟢 abc1234 feat(auth): add JWT validation middleware (2024-01-15)
+   Changes: src/middleware/auth.js, src/utils/jwt.js
+   Reason: Core functionality, no conflict with target branch
 
-🟢 def5678 refactor(auth): 简化 token 验证逻辑 (2024-01-15)
-   变更：src/utils/auth.js
-   原因：重构上述功能，依赖上一个提交
+🟢 def5678 refactor(auth): simplify token validation logic (2024-01-15)
+   Changes: src/utils/auth.js
+   Reason: Refactors above functionality, depends on previous commit
 
-🟡 ghi9012 fix: 修复登录页样式问题 (2024-01-14)
-   变更：src/views/login.vue
-   原因：独立修复，可单独合并
+🟡 ghi9012 fix: fix login page style issue (2024-01-14)
+   Changes: src/views/login.vue
+   Reason: Independent fix, can be merged separately
 
-☑ 全部采纳 AI 建议
-☐ 自定义选择
+☑ Adopt all AI recommendations
+☐ Custom selection
 ```
 
-**选项格式：** `[hash] message (date)`
+**Option Format:** `[hash] message (date)`
 ```
 ☑ abc1234 feat: add user login (2024-01-15)
 ☐ abc5678 fix: resolve memory leak (2024-01-14)
 ☑ abc9012 docs: update API docs (2024-01-13)
 ```
 
-**默认：** 采纳 AI 推荐
+**Default:** Adopt AI recommendations
 
-### 步骤 B5：选择合并方式
+### Step B5: Select Merge Method
 
-下拉选择：
-
-```
-选择合并方式：
-```
-
-| 选项 | 描述 |
-|------|------|
-| Cherry-pick | 不会更改目标分支历史（推荐） |
-| Rebase | 变基到目标分支，直线历史 |
-
-**默认：** Cherry-pick
-
-### 步骤 B6：确认执行
+Dropdown selection:
 
 ```
-即将执行合并：
+Select merge method:
+```
 
-合并方式：<mode>
-源分支：<source>
-目标分支：<target>
-AI 推荐合并：
+| Option | Description |
+|--------|-------------|
+| Cherry-pick | Does not change target branch history (recommended) |
+| Rebase | Rebase onto target branch, linear history |
+
+**Default:** Cherry-pick
+
+### Step B6: Confirm Execution
+
+```
+About to execute merge:
+
+Merge method: <mode>
+Source branch: <source>
+Target branch: <target>
+AI recommends merging:
 - <hash1> <message1>
 - <hash2> <message2>
 - ...
 
-确认执行？
+Confirm execution?
 ```
 
-### 步骤 B7：执行合并
+### Step B7: Execute Merge
 
-#### Cherry-pick 模式
+#### Cherry-pick Mode
 
 ```bash
 git checkout <target>
 git cherry-pick --no-commit <hash1> <hash2> ...
 ```
 
-#### Rebase 模式
+#### Rebase Mode
 
 ```bash
 git checkout <source>
 git rebase <target>
 ```
 
-### 步骤 B8：冲突处理
+### Step B8: Conflict Handling
 
-与快速模式冲突处理流程相同。
+Same as quick mode conflict handling flow.
 
-### 步骤 B9：验证结果
+### Step B9: Verify Result
 
 ```bash
 git log --oneline -5
@@ -380,105 +384,105 @@ git log --oneline -5
 
 ---
 
-## 示例
+## Examples
 
-### 示例 1：快速模式 - 基本用法
+### Example 1: Quick Mode - Basic Usage
 
 ```bash
 /git-merge -t main
 ```
 
-结果：
-- 源分支：当前分支
-- 目标分支：main
-- 提交数量：1（默认）
-- 合并方式：Cherry-pick（默认）
-- AI 自动分析并推荐提交
+Result:
+- Source branch: current branch
+- Target branch: main
+- Commit count: 1 (default)
+- Merge method: Cherry-pick (default)
+- AI automatically analyzes and recommends commits
 
-### 示例 2：快速模式 - 指定提交数量
+### Example 2: Quick Mode - Specify Commit Count
 
 ```bash
 /git-merge -t main -c 2
 ```
 
-结果：
-- 源分支：当前分支
-- 目标分支：main
-- 提交数量：2（当前分支最近2个提交）
-- 合并方式：Cherry-pick（默认）
-- AI 分析最近2个提交，推荐合并策略
+Result:
+- Source branch: current branch
+- Target branch: main
+- Commit count: 2 (recent 2 commits from current branch)
+- Merge method: Cherry-pick (default)
+- AI analyzes recent 2 commits, recommends merge strategy
 
-### 示例 3：快速模式 - Rebase
+### Example 3: Quick Mode - Rebase
 
 ```bash
 /git-merge -t develop -c 3 -m rebase
 ```
 
-结果：
-- 源分支：当前分支
-- 目标分支：develop
-- 提交数量：3
-- 合并方式：Rebase
+Result:
+- Source branch: current branch
+- Target branch: develop
+- Commit count: 3
+- Merge method: Rebase
 
-### 示例 4：快速模式 - 指定源分支
+### Example 4: Quick Mode - Specify Source Branch
 
 ```bash
 /git-merge -s feature-auth -t main
 ```
 
-结果：
-- 源分支：feature-auth
-- 目标分支：main
-- 提交数量：1（默认）
-- 合并方式：Cherry-pick（默认）
+Result:
+- Source branch: feature-auth
+- Target branch: main
+- Commit count: 1 (default)
+- Merge method: Cherry-pick (default)
 
-### 示例 5：交互模式
+### Example 5: Interactive Mode
 
 ```bash
 /git-merge
 ```
 
-交互流程：
-1. 选择源分支 → feature-A
-2. 选择目标分支 → main
-3. AI 分析提交，智能推荐
-4. 采纳 AI 建议或自定义选择
-5. 选择合并方式 → Cherry-pick
-6. 确认执行
+Interactive flow:
+1. Select source branch → feature-A
+2. Select target branch → main
+3. AI analyzes commits, intelligent recommendations
+4. Adopt AI recommendations or custom selection
+5. Select merge method → Cherry-pick
+6. Confirm execution
 
 ---
 
-## 错误处理
+## Error Handling
 
-| 错误 | 原因 | 解决方案 |
-|------|------|----------|
-| 目标分支不存在 | -t 指定的分支不存在 | 检查分支名 |
-| 源分支不存在 | -s 指定的分支不存在 | 检查分支名 |
-| 数量不是正整数 | -c 指定的值无效 | 使用正整数 |
-| 缺少目标 | 快速模式下没有 -t 参数 | 添加 -t branch |
-| fatal: bad object | 无效的提交哈希 | 重新获取提交列表 |
-| error: could not apply | 存在冲突 | 遵循冲突处理流程 |
-| The previous cherry-pick | 合并已在进行中 | git cherry-pick --abort |
-
----
-
-## 快速模式 vs 交互模式对比
-
-| 特性 | 快速模式 | 交互模式 |
-|------|----------|----------|
-| 命令示例 | `/git-merge -t main` | `/git-merge` |
-| 源分支 | 当前分支（或 -s 指定） | 下拉选择 |
-| 目标分支 | -t 指定 | 下拉选择 |
-| 提交选择 | 前 N 个 + AI 推荐 | **AI 智能推荐** |
-| 合并方式 | -m 指定（或默认 pick） | 下拉选择 |
-| 询问次数 | 0-1 次 | 4-5 次 |
-| 使用场景 | 已知要合并哪些提交 | 不确定要合并哪些提交 |
+| Error | Cause | Solution |
+|-------|-------|----------|
+| Target branch does not exist | Branch specified by -t does not exist | Check branch name |
+| Source branch does not exist | Branch specified by -s does not exist | Check branch name |
+| Count is not positive integer | Value specified by -c is invalid | Use positive integer |
+| Missing target | No -t parameter in quick mode | Add -t branch |
+| fatal: bad object | Invalid commit hash | Re-fetch commit list |
+| error: could not apply | Conflicts exist | Follow conflict handling flow |
+| The previous cherry-pick | Merge already in progress | git cherry-pick --abort |
 
 ---
 
-## 注意事项
+## Quick Mode vs Interactive Mode Comparison
 
-- AI 推荐基于提交变更内容分析，仅供参考，最终决策由用户决定
-- 合并前请确认目标分支状态，避免覆盖他人工作
-- 交互模式下，AI 会分析每个提交的功能相关性，建议优先合并关联性高的提交
-- 复杂合并场景建议使用交互模式获取更详细的 AI 分析
+| Feature | Quick Mode | Interactive Mode |
+|---------|------------|-----------------|
+| Command Example | `/git-merge -t main` | `/git-merge` |
+| Source Branch | Current branch (or -s specified) | Dropdown selection |
+| Target Branch | -t specified | Dropdown selection |
+| Commit Selection | First N + AI recommendation | **AI intelligent recommendation** |
+| Merge Method | -m specified (or default pick) | Dropdown selection |
+| Question Count | 0-1 | 4-5 |
+| Use Case | Know which commits to merge | Unsure which commits to merge |
+
+---
+
+## Notes
+
+- AI recommendations are based on commit change content analysis, for reference only, final decision is up to the user
+- Before merging, confirm target branch status to avoid overwriting others' work
+- In interactive mode, AI analyzes each commit's functional relevance, recommends prioritizing high-relevance commits
+- For complex merge scenarios, recommended to use interactive mode for more detailed AI analysis
