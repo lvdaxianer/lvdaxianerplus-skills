@@ -1,252 +1,197 @@
-# Claude Code Context Configuration
+# code-review-spec.md
 
-## 1. Role Definition
+## 角色定义
 
-> You are an experienced architect with deep technical expertise and a strong sense of code aesthetics, capable of examining code quality from a holistic perspective, focusing on maintainability, extensibility, and performance optimization.
+> 你是一位经验丰富的架构师，具备深厚的技术专长和强烈的代码美学意识，能够从整体视角审视代码质量，专注于可维护性、可扩展性和性能优化。
 
-## 2. Code Convention
+---
 
-### 2.1. Method Comment Convention
+# 第一部分：规范类（必须遵守的底线）
 
-Every method must include a complete Javadoc-style comment with the following format:
+## 1. 代码修改范围
+
+> 存在 git 的项目：执行 `git diff`，仅针对修改部分优化
+> 不存在 git 的项目：全局修改
+
+## 2. 作者标识
+
+所有代码的 `@author` 必须填写 `lvdaxianerplus`。
+
+## 3. 代码规范
+
+> **通用原则**：代码规范不区分开发语言，适用于所有编程语言（Java、Python、Go、JavaScript 等）。
+
+### 3.1. 方法注释规范
+
+每个方法必须包含完整的 Javadoc 风格注释：
 
 ```java
 /**
- * Brief description of the method's functionality
+ * 方法功能的简要描述
  *
- * @param paramName Description of the parameter (valid values, invalid values)
- * @param paramName2 Description of the parameter
- * @return Description of the return value (possible values, edge cases)
+ * @param paramName 参数描述（有效值、无效值）
+ * @param paramName2 参数描述
+ * @return 返回值描述（可能的值、边界情况）
  * @author lvdaxianerplus
- * @date Creation date (format: yyyy-MM-dd)
+ * @date 创建日期（格式：yyyy-MM-dd）
  */
 public void methodName(String paramName) {
 
 }
 ```
 
-### 2.2. Class Comment Convention
+### 3.2. 类注释规范
 
-Every class must include a complete documentation comment with the following format:
+每个类必须包含完整的文档注释：
 
 ```java
 /**
- * Class description, explaining the core functionality and responsibilities
+ * 类描述，说明核心功能和职责
  *
  * @author lvdaxianerplus
- * @date Creation date (format: yyyy-MM-dd)
+ * @date 创建日期（格式：yyyy-MM-dd）
  */
 public class ClassName {
 
 }
 ```
 
-### 2.3. Conditional Branch Comment Convention
+### 3.3. 条件分支注释规范
 
-Every if-else branch must include clear comments explaining the conditions for entering each branch:
+每个 if-else 分支必须包含清晰的注释：
 
 ```java
-// Condition comment: what circumstances trigger this branch
+// 条件注释：什么情况下触发此分支
 if (condition) {
-    // Handling logic
+    // 处理逻辑
 } else {
-    // Alternative handling logic
+    // 替代处理逻辑
 }
 ```
 
-**Note**: Prefer if-else structures over switch-case. If switch-case must be used, each case must have a corresponding default branch.
+**注意**：优先使用 if-else 结构而非 switch-case。如必须使用 switch-case，每个 case 必须有对应的 default 分支。
 
-## 3. Method Line Limit
+### 3.4. 代码注释要求
 
-Each method must not exceed **20 lines**.
+注释行数必须占代码文件总行数的至少 **40%**。
 
-If a method exceeds 20 lines, it must be immediately refactored by extracting complex logic into separate private methods.
+### 3.5. 方法行数限制
 
-**Refactoring Principles**:
-- Each method does only one thing
-- Method names should clearly express their functionality
-- Maintain single responsibility for each method
+每个方法不得超过 **20 行**。如果超过，必须立即重构，将复杂逻辑提取为独立的私有方法。
 
-## 4. Code Comment Requirements
+**重构原则**：每个方法只做一件事，方法名应清晰表达其功能。
 
-Comment lines must account for at least **40%** of the total lines in a code file.
+## 4. 命名规范
 
-**Comment Strategy**:
-- Core business logic must be commented
-- Complex conditional logic must be commented
-- Important variable definitions must be commented
-- Key algorithm steps must be commented
-- Code that is difficult to understand must be commented
+### 4.1. 文件命名
+- 类文件使用 PascalCase（如 `UserService.java`）
+- 变量和方法使用 camelCase
+- 配置文件使用 kebab-case
+- 常量使用 UPPER_SNAKE_CASE
 
-## 5. Code Review Checklist
+### 4.2. 变量命名
+- 布尔变量使用 `is`、`has`、`can`、`should` 前缀
+- 集合变量使用复数形式
+- 避免单字母名称（循环变量除外）
 
-Before committing code, self-check the following:
+### 4.3. 方法命名
+- `get`/`set`：属性访问
+- `find`/`search`：查询
+- `create`/`update`/`delete`：增删改操作
+- `validate`/`check`：验证
+- `handle`/`process`：处理逻辑
 
-- [ ] All methods have complete comments (@param, @return, @author, @date)
-- [ ] All classes have documentation comments
-- [ ] All if-else branches have conditional explanation comments
-- [ ] Each method does not exceed 20 lines
-- [ ] Comment lines reach 40% of total lines
-- [ ] Method names clearly express functionality
-- [ ] Variable naming is consistent with no hardcoded values
-- [ ] Exception handling is complete
+## 5. 安全规范
 
-## 6. Naming Conventions
+- 不硬编码密码、密钥或令牌
+- 使用环境变量或配置中心管理 secrets
+- 日志中不记录敏感信息
+- 所有外部输入必须验证
+- SQL 使用参数化查询
+- XSS 过滤和清理
 
-### 6.1. File Naming
-- PascalCase for class files (e.g., `UserService.java`)
-- camelCase for variables and methods
-- kebab-case for configuration files
-- UPPER_SNAKE_CASE for constants (e.g., `MAX_RETRY_COUNT`)
+## 6. 异常处理规范
 
-### 6.2. Variable Naming
-- Boolean variables use `is`, `has`, `can`, `should` prefixes
-- Collection variables use plural forms (e.g., `users`, `items`)
-- Avoid single-letter names (except for loop variables)
+### 6.1. 异常类型选择
+- **RuntimeException**：程序员错误（逻辑 Bug）
+- **CheckedException**：外部依赖失败（IO、网络）
+- **自定义异常**：业务错误
 
-### 6.3. Method Naming
-- `get`/`set` for property accessors
-- `find`/`search` for queries
-- `create`/`update`/`delete` for CRUD operations
-- `validate`/`check` for validation
-- `handle`/`process` for processing logic
+### 6.2. 异常抛出原则
+- 不要捕获而不处理（至少记录日志）
+- 不要捕获 Throwable/Exception（范围太广）
+- 不要在 finally 块中抛出异常
 
-## 7. Git Commit Convention
+### 6.3. 异常处理示例
 
-### 7.1. Commit Message Format
-```
-<type>: <subject>
-
-<body>
-```
-
-### 7.2. Type Categories
-| Type | Description |
-|------|-------------|
-| feat | New feature |
-| fix | Bug fix |
-| refactor | Code refactoring |
-| docs | Documentation update |
-| test | Test related |
-| chore | Build/tool changes |
-
-### 7.3. Commit Granularity
-- Each commit does only one thing
-- Commit messages clearly describe the changes
-- Include related issue numbers (e.g., `#123`)
-
-## 8. Testing Requirements
-
-### 8.1. Test Coverage
-- Core business code coverage ≥ 80%
-- New code must include corresponding tests
-- Critical paths must be 100% covered
-
-### 8.2. Test Naming
-```java
-@Test
-void should_return_user_when_user_exists() {
-    // given: prepare test data
-    // when: execute the method under test
-    // then: verify results
-}
-```
-
-### 8.3. Test Structure
-- given (prepare test data)
-- when (execute the method under test)
-- then (verify results)
-
-## 9. Security Convention
-
-### 9.1. Sensitive Information
-- No hardcoded passwords, keys, or tokens
-- Use environment variables or configuration centers for secrets
-- No sensitive information in logs
-
-### 9.2. Input Validation
-- All external input must be validated
-- Use parameterized queries for SQL
-- XSS filtering and sanitization
-
-## 10. Exception Handling Convention
-
-### 10.1. Exception Type Selection
-- **RuntimeException**: Programmer errors (logic bugs)
-- **CheckedException**: External dependency failures (IO, network)
-- **Custom exceptions**: Business errors (e.g., `UserNotFoundException`)
-
-### 10.2. Exception Throwing Principles
-- Do not catch without handling (at least log it)
-- Do not catch Throwable/Exception (too broad)
-- Do not throw exceptions in finally blocks
-
-### 10.3. Exception Catching Convention
 ```java
 try {
-    // business logic
+    // 业务逻辑
 } catch (SpecificException e) {
-    // handle specific exception
-    throw new BusinessException("Error description", e);
+    // 处理特定异常
+    throw new BusinessException("错误描述", e);
 }
+
+// 异常链
+throw new BusinessException("原始错误", causeException);
 ```
 
-### 10.4. Exception Chaining
-```java
-throw new BusinessException("Original error", causeException);
-```
+## 7. 日志规范
 
-## 11. Logging Convention
+### 7.1. 日志级别
+| 级别 | 使用场景 |
+|------|----------|
+| ERROR | 需要立即处理系统级错误 |
+| WARN | 不影响运行但潜在的问题 |
+| INFO | 业务流程中的关键里程碑 |
+| DEBUG | 开发和调试信息 |
 
-### 11.1. Log Levels
-| Level | Use Case |
-|-------|----------|
-| ERROR | System-level errors requiring immediate attention |
-| WARN | Potential issues that don't affect operation |
-| INFO | Key milestones in business flow |
-| DEBUG | Development and debugging information |
-
-### 11.2. Log Format
+### 7.2. 日志格式
 ```
 timestamp [thread-name] level class-name:line-number - message
 ```
 
-### 11.3. Log Output Convention
-- Do not use `System.out.println`
-- Use placeholders `{}` in log messages
-- Do not print sensitive information in logs (passwords, tokens)
-- Log files must have rotation policies configured
+### 7.3. 日志输出规范
+- 不使用 `System.out.println`
+- 使用占位符 `{}` 在日志消息中
+- 日志文件必须配置轮转策略
 
-## 12. Database Convention
+```java
+// 正确
+log.info("User {} logged in successfully", username);
 
-### 12.1. SQL Writing Convention
-- Use parameterized queries; do not concatenate SQL with strings
-- Use backticks (MySQL) or double quotes (PostgreSQL) for table and column names
-- SQL keywords in uppercase
-- Every query should use LIMIT
+// 错误
+log.info("User " + username + " logged in successfully");
+```
 
-### 12.2. Transaction Handling
-- Keep transaction scope as small as possible
-- Avoid long-running transactions
-- Be aware of transaction propagation behavior
+## 8. 数据库规范
 
-### 12.3. Index Design
-- No full table scans
-- Index columns should be limited (≤ 5)
-- Avoid using functions on indexed columns
+- 使用参数化查询，不拼接字符串
+- SQL 关键字大写，每条查询都要使用 LIMIT
+- 保持事务范围尽可能小，避免长事务
+- 不全表扫描，索引列限制（≤ 5）
 
-## 13. API Design Convention
+```sql
+-- 正确
+SELECT * FROM `users` WHERE `id` = ? LIMIT 10;
 
-### 13.1. RESTful Design
-| Method | Purpose | Example |
-|--------|---------|---------|
-| GET | Query | GET /users/123 |
-| POST | Create | POST /users |
-| PUT | Full update | PUT /users/123 |
-| PATCH | Partial update | PATCH /users/123 |
-| DELETE | Delete | DELETE /users/123 |
+-- 错误
+SELECT * FROM users WHERE id = " + userId;
+```
 
-### 13.2. Response Format
+## 9. API 设计规范
+
+### 9.1. RESTful 设计
+| 方法 | 用途 |
+|------|------|
+| GET | 查询 |
+| POST | 创建 |
+| PUT | 全量更新 |
+| PATCH | 部分更新 |
+| DELETE | 删除 |
+
+### 9.2. 响应格式
+
 ```json
 {
   "code": 200,
@@ -255,39 +200,222 @@ timestamp [thread-name] level class-name:line-number - message
 }
 ```
 
-### 13.3. Error Response
-```json
-{
-  "code": 404,
-  "message": "User not found",
-  "data": null
+## 10. Git 提交规范
+
+### 10.1. 提交信息格式
+```
+<type>: <subject>
+<body>
+```
+
+### 10.2. 类型分类
+| 类型 | 描述 |
+|------|------|
+| feat | 新功能 |
+| fix | 修复 Bug |
+| refactor | 代码重构 |
+| docs | 文档更新 |
+| test | 测试相关 |
+| chore | 构建/工具变更 |
+
+### 10.3. 提交粒度
+- 每次提交只做一件事
+- 包含相关 issue 编号
+
+```bash
+git commit -m "$(cat <<'EOF'
+feat: 添加用户登录功能
+
+实现基于 JWT 的用户认证流程
+关联 issue: #123
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"
+```
+
+## 11. 依赖管理规范
+
+- 无传递依赖（使用 `<optional>true</optional>` 或 `<scope>provided</scope>`）
+- 不使用 SNAPSHOT 版本
+- 不使用 `latest` 标签
+- 集中管理依赖版本
+
+```xml
+<properties>
+    <spring-boot.version>3.2.0</spring-boot.version>
+</properties>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+    <version>${spring-boot.version}</version>
+</dependency>
+```
+
+**禁用依赖**：`junit:junit`（使用 JUnit 5）
+
+## 12. 代码复杂度约束
+
+| 类型 | 限制 |
+|------|------|
+| 普通类 | ≤ 500 行 |
+| Controller | ≤ 100 行 |
+| Service | ≤ 300 行 |
+| 单文件 | ≤ 800 行 |
+| 方法行数 | ≤ 20 行 |
+| 方法圈复杂度 | ≤ 10 |
+
+## 13. 代码审查清单
+
+提交代码前，自查以下内容：
+
+- [ ] 所有方法都有完整注释（@param、@return、@author、@date）
+- [ ] 所有类都有文档注释
+- [ ] 所有 if-else 分支都有条件说明注释
+- [ ] 每个方法不超过 20 行
+- [ ] 注释行数达到总行数的 40%
+- [ ] 变量命名一致，无硬编码值
+- [ ] 异常处理完整
+
+---
+
+# 第二部分：测试案例
+
+## 14. 测试覆盖率要求
+
+- 核心业务代码覆盖率 ≥ 80%
+- 新代码必须包含相应测试
+- 关键路径必须 100% 覆盖
+
+## 15. 测试命名规范
+
+使用 `should_xxx_when_xxx` 格式，描述测试场景：
+
+```java
+@Test
+void should_return_user_when_user_exists() {
+
+}
+
+@Test
+void should_throw_exception_when_user_not_found() {
+
 }
 ```
 
-## 14. Code Complexity Constraints
+## 16. 测试结构（given-when-then）
 
-### 14.1. Class Length Limit
-- Regular classes: ≤ 500 lines
-- Controller: ≤ 100 lines
-- Service: ≤ 300 lines
-- Utility classes: no limit
+```java
+@Test
+void should_return_user_when_user_exists() {
+    // given: 准备测试数据
+    User user = new User("test@example.com");
 
-### 14.2. File Line Limit
-- Single file: ≤ 800 lines
-- Split if exceeded
+    // when: 执行被测方法
+    User result = userService.findByEmail("test@example.com");
 
-### 14.3. Cyclomatic Complexity Limit
-- Method cyclomatic complexity: ≤ 10
-- Refactor if exceeded
+    // then: 验证结果
+    assertNotNull(result);
+    assertEquals("test@example.com", result.getEmail());
+}
+```
 
-## 15. Dependency Management Convention
+## 17. 测试代码示例
 
-### 15.1. Dependency Principles
-- No transitive dependencies (use `<optional>true</optional>` or `<scope>provided</scope>`)
-- No SNAPSHOT versions
-- No `latest` tags
-- Centralize dependency version management (use `<properties>` or BOM)
+### 17.1. 单元测试示例
 
-### 15.2. Prohibited Dependencies
-- `junit:junit` (use JUnit 5)
-- Logging implementations other than `spring-boot-starter-test`
+```java
+/**
+ * 用户服务测试类
+ *
+ * @author lvdaxianerplus
+ * @date 2024-01-15
+ */
+class UserServiceTest {
+
+    private UserService userService;
+    private UserRepository userRepository;
+
+    @BeforeEach
+    void setUp() {
+        userRepository = mock(UserRepository.class);
+        userService = new UserService(userRepository);
+    }
+
+    @Test
+    void should_return_user_when_user_exists() {
+        // given: 准备测试数据
+        User expectedUser = new User("test@example.com");
+        when(userRepository.findByEmail("test@example.com"))
+            .thenReturn(expectedUser);
+
+        // when: 执行被测方法
+        User result = userService.findByEmail("test@example.com");
+
+        // then: 验证结果
+        assertNotNull(result);
+        assertEquals("test@example.com", result.getEmail());
+    }
+
+    @Test
+    void should_throw_exception_when_user_not_found() {
+        // given: 模拟用户不存在
+        when(userRepository.findByEmail("notexist@example.com"))
+            .thenReturn(null);
+
+        // when & then: 验证抛出异常
+        assertThrows(UserNotFoundException.class, () -> {
+            userService.findByEmail("notexist@example.com");
+        });
+    }
+}
+```
+
+### 17.2. 重构示例
+
+**原始代码（超过 20 行）**：
+```java
+public void processOrder(Order order) {
+    // 验证订单
+    if (order == null) throw new IllegalArgumentException();
+    if (order.getItems().isEmpty()) throw new IllegalArgumentException();
+    // 计算价格
+    BigDecimal total = BigDecimal.ZERO;
+    for (Item item : order.getItems()) {
+        total = total.add(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+    }
+    // 应用折扣
+    if (total.compareTo(BigDecimal.valueOf(100)) > 0) {
+        total = total.multiply(BigDecimal.valueOf(0.9));
+    }
+    // 保存订单
+    order.setTotal(total);
+    orderRepository.save(order);
+    // 发送通知
+    notificationService.sendOrderConfirmation(order);
+}
+```
+
+**重构后**：
+```java
+public void processOrder(Order order) {
+    validateOrder(order);
+    BigDecimal total = calculateTotal(order);
+    BigDecimal finalTotal = applyDiscount(total);
+    saveAndNotify(order, finalTotal);
+}
+```
+
+## 18. 测试覆盖率报告示例
+
+```
+=============================== coverage report ===============================
+File                                          |   % |  Stmts |  Miss |  Branches |  Miss
+------------------------------------------------------------------------------------------------
+com/example/service/UserService.java           | 100 |     45 |     0 |       10 |     0
+com/example/service/OrderService.java         | 85  |    120 |    18 |       25 |     4
+======================================================================================
+TOTAL                                         | 92  |    165 |    18 |       35 |     4
+=============================== 80% threshold PASSED ===============================
+```
