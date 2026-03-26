@@ -18,6 +18,7 @@
 | 技能 | 描述 | 文档 |
 |------|------|------|
 | `code-formatting-after-ai-generation` | 在 AI 生成代码后格式化清理代码 | [English](./skills/formatting-code/SKILL.md) / [中文](./skills/formatting-code/SKILL-zh.md) |
+| `ddd` | DDD 最佳实践 — 战略设计与战术设计模式 | [English](./skills/ddd/SKILL.md) / [中文](./skills/ddd/SKILL-zh.md) |
 
 ## 快速开始
 
@@ -56,9 +57,12 @@ lvdaxianerplus-ai/
 │   ├── save-context-zh.md # 中文指南（Guide）
 │   └── save-context-en.md # 英文指南（Guide）
 ├── skills/
-│   └── formatting-code/
-│       ├── SKILL.md       # 工具（Tool）
-│       └── SKILL-zh.md    # 中文指南（Guide）
+│   ├── formatting-code/
+│   │   ├── SKILL.md       # 工具（Tool）
+│   │   └── SKILL-zh.md    # 中文指南（Guide）
+│   └── ddd/
+│       ├── SKILL.md       # 工具（Tool，英文）
+│       └── SKILL-zh.md    # 中文指南
 ├── README.md              # 英文索引
 ├── README-zh.md           # 本文件（索引）
 └── LICENSE

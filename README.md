@@ -18,6 +18,7 @@ A collection of commands and skills for AI scaffolding to enhance code quality a
 | Skill | Description | Documentation |
 |-------|-------------|---------------|
 | `code-formatting-after-ai-generation` | Format and clean up code after AI generates it | [English](./skills/formatting-code/SKILL.md) / [中文](./skills/formatting-code/SKILL-zh.md) |
+| `ddd` | Domain-Driven Design best practices — strategic & tactical patterns | [English](./skills/ddd/SKILL.md) / [中文](./skills/ddd/SKILL-zh.md) |
 
 ## Quick Start
 
@@ -56,9 +57,12 @@ lvdaxianerplus-ai/
 │   ├── save-context-zh.md # 中文指南（Guide）
 │   └── save-context-en.md # 英文指南（Guide）
 ├── skills/
-│   └── formatting-code/
-│       ├── SKILL.md       # 工具（Tool）
-│       └── SKILL-zh.md    # 中文指南（Guide）
+│   ├── formatting-code/
+│   │   ├── SKILL.md       # 工具（Tool）
+│   │   └── SKILL-zh.md    # 中文指南（Guide）
+│   └── ddd/
+│       ├── SKILL.md       # 工具（Tool，英文）
+│       └── SKILL-zh.md    # 中文指南
 ├── README.md              # English index
 ├── README-zh.md           # 中文索引
 └── LICENSE
