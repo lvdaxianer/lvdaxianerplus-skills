@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Changed
+- 新增 DDD 最佳实践 Skill (aba792e)
+
 - 扩展 code-review-spec.md 多语言示例覆盖 (bd81ca7)
 
 ### Changed
