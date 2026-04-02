@@ -6,75 +6,59 @@ A collection of commands and skills for AI scaffolding to enhance code quality a
 
 ## Commands
 
-| Command | Description | Documentation |
-|---------|-------------|---------------|
-| `/commit` | Create well-formatted commits with conventional commit messages | [Guide](./commands/commit-en.md) |
-| `/git-merge` | AI-assisted selective commit merging tool | [Guide](./commands/git-merge-en.md) |
-| `/discuss` | Interactive requirement gathering command | [Guide](./commands/discuss-en.md) |
-| `save-context` | Save key points to project context files | [Guide](./commands/save-context-en.md) |
+| Command | Description |
+|---------|-------------|
+| `/commit` | Create well-formatted commits with conventional commit messages |
+| `/git-merge` | AI-assisted selective commit merging tool |
+| `/discuss` | Interactive requirement gathering command |
 
 ## Skills
 
-| Skill | Description | Documentation |
-|-------|-------------|---------------|
-| `code-formatting-after-ai-generation` | Format and clean up code after AI generates it | [English](./skills/formatting-code/SKILL.md) / [中文](./skills/formatting-code/SKILL-zh.md) |
-| `ddd` | Domain-Driven Design best practices — strategic & tactical patterns | [English](./skills/ddd/SKILL.md) / [中文](./skills/ddd/SKILL-zh.md) |
+| Skill | Description |
+|-------|-------------|
+| `save-context` | Auto-save session context to .ai/context.md files (triggered manually or on first tool call) |
+| `code-formatting-after-ai-generation` | Format and clean up code after AI generates it |
+| `ddd` | Domain-Driven Design best practices |
+| `code-review-spec` | Code review with documentation and complexity standards |
+| `product-manager` | Product management best practices |
 
-## Quick Start
+## Install
 
-### Install Commands
-
-```bash
-# Copy command files to global commands directory
-cp commands/commit.md ~/.claude/commands/
-cp commands/git-merge.md ~/.claude/commands/
-cp commands/discuss.md ~/.claude/commands/
-cp commands/save-context.md ~/.claude/commands/
-```
-
-### Install Skills
+### Commands
 
 ```bash
-# Copy skill folders to global skills directory
-cp -r skills/formatting-code ~/.claude/skills/
+cp commands/*.md ~/.claude/commands/
 ```
 
-## Directory Structure
+### Skills
 
-```
-lvdaxianerplus-ai/
-├── commands/
-│   ├── commit.md           # 工具（Tool）
-│   ├── commit-zh.md        # 中文指南（Guide）
-│   ├── commit-en.md        # 英文指南（Guide）
-│   ├── git-merge.md        # 工具（Tool）
-│   ├── git-merge-zh.md    # 中文指南（Guide）
-│   ├── git-merge-en.md     # 英文指南（Guide）
-│   ├── discuss.md          # 工具（Tool，英文）
-│   ├── discuss-zh.md      # 中文指南（Guide）
-│   ├── discuss-en.md      # 英文指南（Guide）
-│   ├── save-context.md    # 工具（Tool）
-│   ├── save-context-zh.md # 中文指南（Guide）
-│   └── save-context-en.md # 英文指南（Guide）
-├── skills/
-│   ├── formatting-code/
-│   │   ├── SKILL.md       # 工具（Tool）
-│   │   └── SKILL-zh.md    # 中文指南（Guide）
-│   └── ddd/
-│       ├── SKILL.md       # 工具（Tool，英文）
-│       └── SKILL-zh.md    # 中文指南
-├── README.md              # English index
-├── README-zh.md           # 中文索引
-└── LICENSE
+```bash
+cp -r skills/* ~/.claude/skills/
 ```
 
-**Note:**
-- The actual command files (e.g., `commit.md`) are the ones invoked by Claude
-- The `-zh.md` / `-en.md` files are user guides explaining how to install and use
+## Global Hook Configuration
 
-## License
+For automatic code review on every edit, add to `~/.claude/settings.json`:
 
-MIT License - see [LICENSE](LICENSE) file for details.
+```json
+{
+  "permissions": {
+    "allow": ["Skill(code-review-spec)", "Skill(save-context)", "Read", "Write", "Bash"]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{"type": "agent", "prompt": "Review using code-review-spec...", "timeout": 120}]
+      },
+      {
+        "matcher": "Bash|Read|Edit|Write|Glob|Grep",
+        "hooks": [{"type": "agent", "prompt": "Execute save-context skill...", "timeout": 60}]
+      }
+    ]
+  }
+}
+```
 
 ---
 
