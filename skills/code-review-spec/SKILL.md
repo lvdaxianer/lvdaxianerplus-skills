@@ -45,7 +45,7 @@ description: Use when performing code review, code review after changes, code fo
  * @param paramName 参数描述（有效值、无效值）
  * @param paramName2 参数描述
  * @return 返回值描述（可能的值、边界情况）
- * @author lvdaxianerplus
+ * @author 乌骓
  * @date 创建日期（格式：yyyy-MM-dd）
  */
 public void methodName(String paramName) {
@@ -62,7 +62,7 @@ public void methodName(String paramName) {
 //
 // Returns: 返回值描述（可能的值、边界情况）
 //
-// Author: lvdaxianerplus
+// Author: 乌骓
 // Date: 2024-01-15
 func MethodName(paramName string) {
 
@@ -81,7 +81,7 @@ func MethodName(paramName string) {
  * @param paramName - 参数描述（有效值、无效值）
  * @param paramName2 - 参数描述
  * @returns 返回值描述（可能的值、边界情况）
- * @author lvdaxianerplus
+ * @author 乌骓
  * @date 2024-01-15
  */
 function methodName(paramName: string): void {
@@ -93,7 +93,7 @@ function methodName(paramName: string): void {
  *
  * @param userId - 用户 ID（有效值 > 0）
  * @returns 用户信息对象
- * @author lvdaxianerplus
+ * @author 乌骓
  * @date 2024-01-15
  */
 async function fetchUser(userId: number): Promise<User> {
@@ -109,7 +109,7 @@ async function fetchUser(userId: number): Promise<User> {
  *
  * @param userId - 用户 ID（有效值 > 0）
  * @returns 用户信息对象
- * @author lvdaxianerplus
+ * @author 乌骓
  * @date 2024-01-15
  */
 const getUser = async (userId: number): Promise<User> => {
@@ -134,7 +134,7 @@ def method_name(param_name: str) -> None:
     Returns:
         返回值描述（可能的值、边界情况）
 
-    Author: lvdaxianerplus
+    Author: 乌骓
     Date: 2024-01-15
     """
     pass
@@ -154,7 +154,7 @@ async def fetch_user(user_id: int) -> dict:
     Raises:
         UserNotFoundError: 用户不存在时抛出
 
-    Author: lvdaxianerplus
+    Author: 乌骓
     Date: 2024-01-15
     """
     pass
@@ -173,7 +173,7 @@ async def fetch_user(user_id: int) -> dict:
 /**
  * 类描述，说明核心功能和职责
  *
- * @author lvdaxianerplus
+ * @author 乌骓
  * @date 创建日期（格式：yyyy-MM-dd）
  */
 public class ClassName {
@@ -184,7 +184,7 @@ public class ClassName {
 ```go
 // PackageName 类/模块描述，说明核心功能和职责
 //
-// Author: lvdaxianerplus
+// Author: 乌骓
 // Date: 2024-01-15
 package service
 ```
@@ -198,7 +198,7 @@ package service
 /**
  * 类/模块描述，说明核心功能和职责
  *
- * @author lvdaxianerplus
+ * @author 乌骓
  * @date 2024-01-15
  */
 export class UserService {
@@ -208,7 +208,7 @@ export class UserService {
 /**
  * Vue 组件描述，说明核心功能和职责
  *
- * @author lvdaxianerplus
+ * @author 乌骓
  * @date 2024-01-15
  */
 export default defineComponent({
@@ -225,7 +225,7 @@ export default defineComponent({
 """
 类/模块描述，说明核心功能和职责
 
-Author: lvdaxianerplus
+Author: 乌骓
 Date: 2024-01-15
 """
 class UserService:
@@ -237,7 +237,7 @@ class UserService:
 """
 Vue 组件模块描述，说明核心功能和职责
 
-Author: lvdaxianerplus
+Author: 乌骓
 Date: 2024-01-15
 """
 ```
@@ -294,7 +294,7 @@ else:
 
 ### 3.4. 代码注释要求
 
-注释行数必须占代码文件总行数的至少 **40%**。
+注释行数必须占代码文件总行数的至少 **60%**。
 
 ### 3.5. 方法行数限制
 
@@ -681,7 +681,7 @@ dev = [
 - [ ] 所有类都有文档注释
 - [ ] 所有 if-else 分支都有条件说明注释
 - [ ] 每个方法不超过 20 行
-- [ ] 注释行数达到总行数的 40%
+- [ ] 注释行数达到总行数的 60%
 - [ ] 变量命名一致，无硬编码值
 - [ ] 异常处理完整
 
@@ -754,7 +754,7 @@ void should_return_user_when_user_exists() {
 /**
  * 用户服务测试类
  *
- * @author lvdaxianerplus
+ * @author 乌骓
  * @date 2024-01-15
  */
 class UserServiceTest {
@@ -816,7 +816,7 @@ import (
 // When: 执行被测方法
 // Then: 验证结果
 //
-// Author: lvdaxianerplus
+// Author: 乌骓
 // Date: 2024-01-15
 func TestUserService_ShouldReturnUserWhenUserExists(t *testing.T) {
     // given: 准备测试数据
@@ -844,7 +844,7 @@ func TestUserService_ShouldReturnUserWhenUserExists(t *testing.T) {
 /**
  * 用户服务测试类
  *
- * @author lvdaxianerplus
+ * @author 乌骓
  * @date 2024-01-15
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -898,7 +898,7 @@ import UserCard from './UserCard.vue';
 /**
  * UserCard 组件测试
  *
- * @author lvdaxianerplus
+ * @author 乌骓
  * @date 2024-01-15
  */
 describe('UserCard', () => {
@@ -931,7 +931,7 @@ describe('UserCard', () => {
 """
 用户服务测试类
 
-Author: lvdaxianerplus
+Author: 乌骓
 Date: 2024-01-15
 """
 import pytest

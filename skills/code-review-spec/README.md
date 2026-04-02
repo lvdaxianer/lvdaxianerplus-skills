@@ -26,7 +26,7 @@
 
 **检查范围**：
 - 类/方法 Javadoc 注释
-- 注释占比 ≥40%
+- 注释占比 ≥60%
 - 命名规范
 - 方法行数限制（≤20行）
 - 安全规范
@@ -57,7 +57,7 @@
         "hooks": [
           {
             "type": "agent",
-            "prompt": "Review the modified code file using code-review-spec skill.\n\nExtract the file path from the hook arguments ($ARGUMENTS), read the file, and check:\n- Class and method documentation (Javadoc/comments)\n- Comment ratio (must be ≥40%)\n- Naming conventions\n- Method length (≤20 lines)\n- Security, exception handling, logging standards\n- Code complexity limits\n\nIMPORTANT: \n1. Only review and fix code files (.java, .ts, .tsx, .js, .py, .go, .vue, .sql, etc.)\n2. Do NOT edit .claude directory, skills directory, or settings files\n3. Only fix CRITICAL issues - missing class/method comments, comment ratio <40%, method length >20 lines\n4. Report findings briefly, do not overwhelm\n\nHook arguments: $ARGUMENTS",
+            "prompt": "Review the modified code file using code-review-spec skill.\n\nExtract the file path from the hook arguments ($ARGUMENTS), read the file, and check:\n- Class and method documentation (Javadoc/comments)\n- Comment ratio (must be ≥60%)\n- Naming conventions\n- Method length (≤20 lines)\n- Security, exception handling, logging standards\n- Code complexity limits\n\nIMPORTANT: \n1. Only review and fix code files (.java, .ts, .tsx, .js, .py, .go, .vue, .sql, etc.)\n2. Do NOT edit .claude directory, skills directory, or settings files\n3. Only fix CRITICAL issues - missing class/method comments, comment ratio <40%, method length >20 lines\n4. Report findings briefly, do not overwhelm\n\nHook arguments: $ARGUMENTS",
             "timeout": 120,
             "statusMessage": "Running code review..."
           }
