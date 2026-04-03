@@ -302,6 +302,159 @@ else:
 
 **重构原则**：每个方法只做一件事，方法名应清晰表达其功能。
 
+### 3.6. 批量处理规范
+
+> **通用原则**：能用批量处理的场景，禁止使用 for 循环逐条处理。
+
+批量处理的优势：
+- 减少数据库/网络往返次数
+- 提升系统整体吞吐量
+- 降低资源占用
+
+<details>
+<summary><b>Java</b></summary>
+
+```java
+// 错误：for 循环逐条处理
+for (User user : users) {
+    userRepository.save(user);
+}
+
+// 正确：批量处理
+userRepository.saveAll(users);
+```
+
+```java
+// 错误：for 循环逐条查询
+for (Long id : ids) {
+    User user = userRepository.findById(id);
+    // 处理逻辑
+}
+
+// 正确：批量查询
+List<User> users = userRepository.findAllById(ids);
+```
+
+</details>
+
+<details>
+<summary><b>Python</b></summary>
+
+```python
+# 错误：for 循环逐条处理
+for item in items:
+    process_item(item)
+
+# 正确：批量处理
+process_batch(items)
+```
+
+```python
+# 错误：for 循环逐条插入
+for record in records:
+    db.insert(record)
+
+# 正确：批量插入
+db.insert_many(records)
+```
+
+</details>
+
+<details>
+<summary><b>TypeScript</b></summary>
+
+```typescript
+// 错误：for 循环逐条处理
+for (const id of ids) {
+    await api.delete(id);
+}
+
+// 正确：批量处理
+await api.deleteBatch(ids);
+```
+
+```typescript
+// 错误：for 循环逐条查询
+for (const id of ids) {
+    const item = await db.findById(id);
+}
+
+# 正确：批量查询
+const items = await db.findByIds(ids);
+```
+
+</details>
+
+### 3.7. Java 线程池规范
+
+> **仅适用于 Java**：禁止使用已定义的线程池（如 `ExecutorService`、`@Async` 默认线程池），必须使用自定义线程池。
+
+#### 3.7.1. 线程池定义要求
+
+- 必须定义有意义的 `threadName`（使用 `ThreadFactory` 设置）
+- 必须使用有业务含义的日志标识
+- 线程池名称应体现业务用途
+
+#### 3.7.2. 线程池定义示例
+
+```java
+// 定义业务线程池
+private static final ThreadFactory USER_THREAD_FACTORY = new ThreadFactoryBuilder()
+    .setNameFormat("user-handler-%d")
+    .setUncaughtExceptionHandler((t, e) -> {
+        log.error("[用户处理] 线程 {} 异常", t.getName(), e);
+    })
+    .build();
+
+private final ExecutorService userExecutor = new ThreadPoolExecutor(
+    10, 20, 60L, TimeUnit.SECONDS,
+    new LinkedBlockingQueue<>(1000),
+    USER_THREAD_FACTORY,
+    new ThreadPoolExecutor.CallerRunsPolicy()
+);
+
+// 线程池执行时必须打印日志
+public void processUserTask(User user) {
+    userExecutor.execute(() -> {
+        log.info("[用户处理] 开始处理用户: {}", user.getId());
+        try {
+            // 业务逻辑
+            log.info("[用户处理] 用户处理成功: {}", user.getId());
+        } catch (Exception e) {
+            log.error("[用户处理] 用户处理失败: {}", user.getId(), e);
+        }
+    });
+}
+```
+
+#### 3.7.3. 常见业务线程池命名
+
+| 业务场景 | 线程池名称示例 |
+|----------|---------------|
+| 用户处理 | `user-handler-%d`、`user-processor-%d` |
+| 订单处理 | `order-handler-%d`、`order-processor-%d` |
+| 消息发送 | `msg-sender-%d`、`notification-sender-%d` |
+| 数据同步 | `data-sync-%d`、`sync-worker-%d` |
+| 文件处理 | `file-processor-%d`、`file-handler-%d` |
+
+#### 3.7.4. 错误示例
+
+```java
+// 错误：使用匿名线程池，无有意义名称
+ExecutorService executor = Executors.newFixedThreadPool(10);
+
+// 错误：使用 @Async 默认线程池
+@Async
+public void process() {
+    // 无法追踪线程
+}
+
+// 错误：缺少日志
+executor.execute(() -> {
+    doSomething();
+});
+```
+
 ## 4. 命名规范
 
 ### 4.1. 文件命名
@@ -445,6 +598,59 @@ timestamp [thread-name] level class-name:line-number - message
 - 不使用 `System.out.println` / `print` / `fmt.Println` 等直接输出
 - 使用占位符在日志消息中
 - 日志文件必须配置轮转策略
+- **必须带有业务标识**，格式：`[业务标识] 消息内容`
+
+#### 7.3.1. 业务标识日志示例
+
+```java
+// 正确：带有业务标识
+log.info("[用户登录] 用户登录成功, userId={}", userId);
+log.warn("[订单处理] 库存不足, orderId={}", orderId);
+log.error("[支付服务] 支付失败, orderId={}, error={}", orderId, e.getMessage());
+
+// 错误：缺少业务标识
+log.info("用户登录成功, userId={}", userId);
+log.info("订单处理完成");
+```
+
+```go
+// 正确：带有业务标识
+log.WithFields(log.Fields{"business": "user-login"}).Info("[用户登录] 用户登录成功")
+log.WithFields(log.Fields{"business": "order"}).Error("[订单处理] 订单处理失败")
+
+// 错误：缺少业务标识
+log.Info("用户登录成功")
+```
+
+```typescript
+// 正确：带有业务标识
+logger.info('[用户登录] 用户登录成功', { userId });
+logger.error('[支付服务] 支付异常', { orderId, error: e.message });
+
+// 错误：缺少业务标识
+logger.info('用户登录成功');
+```
+
+```python
+# 正确：带有业务标识
+logger.info(f"[用户登录] 用户登录成功, user_id={user_id}")
+logger.error(f"[订单处理] 订单处理失败, order_id={order_id}")
+
+# 错误：缺少业务标识
+logger.info("用户登录成功")
+```
+
+#### 7.3.2. 常见业务标识
+
+| 业务场景 | 日志标识 | 示例 |
+|----------|----------|------|
+| 用户登录 | `[用户登录]` | `log.info("[用户登录] 用户登录成功")` |
+| 用户注册 | `[用户注册]` | `log.info("[用户注册] 新用户注册成功")` |
+| 订单创建 | `[订单创建]` | `log.info("[订单创建] 订单创建成功")` |
+| 订单支付 | `[订单支付]` | `log.info("[订单支付] 支付成功")` |
+| 文件上传 | `[文件上传]` | `log.info("[文件上传] 文件上传成功")` |
+| 数据同步 | `[数据同步]` | `log.info("[数据同步] 同步完成")` |
+| 接口调用 | `[API调用]` | `log.info("[API调用] 调用外部接口成功")` |
 
 <details>
 <summary><b>Java (SLF4J)</b></summary>
