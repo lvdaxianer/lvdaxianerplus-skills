@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- 更新 CHANGELOG (fd03fb7)
 
 ### Changed
 - 更新注释比例要求和作者标识 (1ac53cc)
