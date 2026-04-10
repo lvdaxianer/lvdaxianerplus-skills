@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
+- 更新 README 添加 api-doc skill (dda038c)
+
+### Changed
+- 添加 API 接口文档编写规范 skill (83e7cde)
+
 - 将作者标识从乌骓修改为 lvdaxianerplus (64db6ec)
 
 ### Changed

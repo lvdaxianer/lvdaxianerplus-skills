@@ -23,6 +23,21 @@
 | `product-manager` | 产品经理最佳实践 |
 | `api-doc` | API 接口文档编写规范，包含各 HTTP 方法的完整示例 |
 
+## 工作流文档
+
+项目包含两套可独立使用的开发流程文档：
+
+| 文档 | 描述 |
+|------|------|
+| [spec/spec-kit+superpowers.md](./spec/spec-kit+superpowers.md) | Spec-Kit + Superpowers 完整开发流程（项目级规范管控） |
+| [spec/openspec+superpowers.md](./spec/openspec+superpowers.md) | OpenSpec + Superpowers 完整开发流程（接口契约标准化） |
+
+- **Spec-Kit**：项目宪法制定者，定义全局规则、功能规范
+- **OpenSpec**：接口契约制定者，用 OpenAPI 规范定义接口
+- **Superpowers**：严格执行引擎，基于规范以 TDD 模式完成开发
+
+---
+
 ## 安装
 
 ### 命令

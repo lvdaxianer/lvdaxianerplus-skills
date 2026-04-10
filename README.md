@@ -23,6 +23,21 @@ A collection of commands and skills for AI scaffolding to enhance code quality a
 | `product-manager` | Product management best practices |
 | `api-doc` | API documentation writing specification with examples for all HTTP methods |
 
+## Workflow Documents
+
+The project includes two standalone development workflow documents:
+
+| Document | Description |
+|----------|-------------|
+| [spec/spec-kit+superpowers.md](./spec/spec-kit+superpowers.md) | Spec-Kit + Superpowers workflow (project-level specification management) |
+| [spec/openspec+superpowers.md](./spec/openspec+superpowers.md) | OpenSpec + Superpowers workflow (API contract standardization) |
+
+- **Spec-Kit**: Project constitution creator, defines global rules and functional specifications
+- **OpenSpec**: API contract creator, defines interfaces using OpenAPI specifications
+- **Superpowers**: Strict execution engine, implements TDD-based development following specifications
+
+---
+
 ## Install
 
 ### Commands
