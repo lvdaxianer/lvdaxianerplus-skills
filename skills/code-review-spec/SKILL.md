@@ -292,6 +292,143 @@ else:
 
 **注意**：优先使用 if-else 结构而非 switch-case。如必须使用 switch-case，每个 case 必须有对应的 default 分支。
 
+### 3.3.1. if-else 强制配对规范（强制）
+
+> **强制要求**：所有 if 语句**必须**包含 else 分支，不允许存在单独 if 而无 else 的情况。
+
+**核心原则**：
+- 每个 if 都必须有对应的 else
+- 如果 if 分支是**设置值**的操作，else 分支必须设置一个**合理的值**（根据业务逻辑，else 可能设置初期值、默认值、空值、备选值、降级值等）
+- 这是代码健壮性的基础，确保所有分支路径都被正确处理
+
+<details>
+<summary><b>正确示例</b></summary>
+
+```java
+// 正确：if 设置值，else 设置合理值
+int result;
+if (condition) {
+    result = calculateValue();  // 正常计算结果
+} else {
+    result = fallbackValue();  // 降级处理值
+}
+
+// 正确：if 有值，else 设置空状态/默认值
+String displayName;
+if (user != null) {
+    displayName = user.getName();
+} else {
+    displayName = "匿名用户";  // 空状态下的合理显示值
+}
+
+// 正确：布尔值设置
+boolean isActive;
+if (status == Status.ENABLED) {
+    isActive = true;
+} else {
+    isActive = false;  // 其他状态统一为 false
+}
+
+// 正确：业务枚举值
+OrderStatus status;
+if (isPaid) {
+    status = OrderStatus.PAID;
+} else {
+    status = OrderStatus.UNPAID;  // 未支付状态
+}
+```
+
+```typescript
+// 正确：if 设置值，else 设置备选值
+const discount = isMember ? calculateDiscount() : 0;  // 非会员无折扣
+
+// 正确：else 设置合理默认值
+let userName: string;
+if (currentUser) {
+    userName = currentUser.name;
+} else {
+    userName = "游客";  // 空状态下的合理显示值
+}
+
+// 正确：降级处理
+const config = isConfigLoaded ? loadedConfig : defaultConfig;
+```
+
+```python
+# 正确：if 设置值，else 设置备选值
+result = calculate_value() if condition else fallback_value()
+
+# 正确：else 设置空状态/默认值
+items = fetch_items() if has_items else []
+
+# 正确：业务逻辑分支
+status = OrderStatus.PAID if is_paid else OrderStatus.PENDING
+```
+
+</details>
+
+<details>
+<summary><b>错误示例</b></summary>
+
+```java
+// 错误：if 无 else，缺失分支处理
+int result;
+if (condition) {
+    result = calculateValue();  // 只处理了 condition=true 的情况
+}
+// result 可能未初始化
+
+// 错误：缺少 else 分支处理
+boolean isValid;
+if (value > 0) {
+    isValid = true;
+}
+// isValid 在 false 时未处理
+
+// 错误：用 return 替代 else，逻辑不清晰
+if (user != null) {
+    return user.getName();
+}
+return "匿名用户";  // 这种写法不如 else 清晰，且容易出错
+```
+
+```typescript
+// 错误：if 无 else
+let result: number;
+if (condition) {
+    result = 100;
+}
+// result 可能未定义
+
+// 错误：缺少 else 分支
+let status: string;
+if (isSuccess) {
+    status = "成功";
+}
+// 应该：else { status = "失败"; }
+```
+
+```python
+# 错误：if 无 else
+result = None
+if condition:
+    result = calculate_value()
+# result 可能在 else 时仍为 None
+```
+
+</details>
+
+#### else 分支的合理值类型
+
+| 场景 | else 可能设置的值 |
+|------|------------------|
+| 空状态 | 空字符串 `""`、`null`、空集合 `[]` |
+| 默认值 | `0`、`false`、`DEFAULT_VALUE` |
+| 备选值 | `fallbackValue()`、备选数据源 |
+| 降级值 | `defaultConfig`、`ERROR_CODE` |
+| 业务枚举 | `OrderStatus.UNPAID`、`UserRole.GUEST` |
+| 空安全 | `Optional.empty()`、`Result.Err()` |
+
 ### 3.4. 代码注释要求
 
 注释行数必须占代码文件总行数的至少 **60%**。
@@ -738,45 +875,6 @@ SELECT * FROM `users` WHERE `id` = ? LIMIT 10;
 SELECT * FROM users WHERE id = " + userId;
 ```
 
-## 9. API 设计规范
-
-### 9.1. RESTful 设计
-| 方法 | 用途 |
-|------|------|
-| GET | 查询 |
-| POST | 创建 |
-| PUT | 全量更新 |
-| PATCH | 部分更新 |
-| DELETE | 删除 |
-
-### 9.2. 响应格式
-
-```json
-{
-  "code": 200,
-  "message": "success",
-  "data": {}
-}
-```
-
-## 10. Git 提交规范
-
-### 10.1. 提交信息格式
-```
-<type>: <subject>
-<body>
-```
-
-### 10.2. 类型分类
-| 类型 | 描述 |
-|------|------|
-| feat | 新功能 |
-| fix | 修复 Bug |
-| refactor | 代码重构 |
-| docs | 文档更新 |
-| test | 测试相关 |
-| chore | 构建/工具变更 |
-
 ### 10.3. 提交粒度
 - 每次提交只做一件事
 - 包含相关 issue 编号
@@ -792,81 +890,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 ```
-
-## 11. 依赖管理规范
-
-### 11.1. Java (Maven/Gradle)
-
-```xml
-<properties>
-    <spring-boot.version>3.2.0</spring-boot.version>
-</properties>
-
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-web</artifactId>
-    <version>${spring-boot.version}</version>
-</dependency>
-```
-
-**禁用依赖**：`junit:junit`（使用 JUnit 5）
-
-### 11.2. Go
-
-```go
-module github.com/example/project
-
-go 1.21
-
-require (
-    github.com/gin-gonic/gin v1.9.1
-    github.com/spf13/viper v1.18.2
-)
-```
-
-**注意**：不使用第三方库的无用依赖，定期清理 `go.mod`。
-
-### 11.3. TypeScript / Vue (npm/pnpm)
-
-```json
-{
-  "dependencies": {
-    "vue": "^3.4.0",
-    "pinia": "^2.1.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.3.0",
-    "vitest": "^1.2.0"
-  }
-}
-```
-
-**注意**：生产依赖和开发依赖严格区分，使用 lock 文件锁定版本。
-
-### 11.4. Python
-
-```toml
-[project]
-dependencies = [
-    "fastapi>=0.109.0",
-    "uvicorn>=0.27.0",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.4.0",
-    "pytest-cov>=4.1.0",
-]
-```
-
-**注意**：不使用 SNAPSHOT 版本，不使用 `latest` 标签。
-
-### 11.5. 通用原则
-
-- 无传递依赖（使用 `<optional>true</optional>` / `<scope>provided</scope>` / `extras`）
-- 不使用 SNAPSHOT 版本
-- 不使用 `latest` 标签
-- 集中管理依赖版本
 
 ## 12. 代码复杂度约束
 
@@ -936,6 +959,11 @@ dev = [
 - [✅/❌/不适用] **SQL 注入**：使用参数化查询防注入
 - [✅/❌/不适用] **XSS**：用户输入必须过滤或转义
 
+### 13.9. if-else 强制配对规范（强制）
+
+- [✅/❌/不适用] **else 强制**：所有 if 语句**必须**包含 else 分支，不允许存在单独 if 而无 else
+- [✅/❌/不适用] **合理值设置**：如果 if 分支是设置值的操作，else 分支必须设置合理值（初期值、默认值、空值、备选值、降级值等）
+
 ---
 
 ### 审查报告格式
@@ -959,6 +987,10 @@ dev = [
 - [✅/❌/不适用] 方法行数：具体说明
 ...（逐项列出）
 
+### 13.9 if-else 强制配对
+- [✅/❌/不适用] else 强制：具体说明
+- [✅/❌/不适用] 合理值设置：具体说明
+
 ### 总体评价
 [通过/不通过]
 
@@ -968,370 +1000,3 @@ dev = [
 ```
 
 **任何一项检查不通过，审查结果即为不通过。**
-
----
-
-# 第二部分：测试案例
-
-## 14. 测试覆盖率要求
-
-- 核心业务代码覆盖率 ≥ 80%
-- 新代码必须包含相应测试
-- 关键路径必须 100% 覆盖
-
-## 15. 测试命名规范
-
-使用 `should_xxx_when_xxx` 格式，描述测试场景（所有语言通用）：
-
-```java
-@Test
-void should_return_user_when_user_exists() {
-
-}
-```
-
-```typescript
-it('should_return_user_when_user_exists', () => {
-
-});
-```
-
-```python
-def test_should_return_user_when_user_exists():
-
-    pass
-```
-
-```go
-func TestShouldReturnUserWhenUserExists(t *testing.T) {
-
-}
-```
-
-## 16. 测试结构（given-when-then）
-
-所有语言均使用 given-when-then 结构组织测试：
-
-```java
-@Test
-void should_return_user_when_user_exists() {
-    // given: 准备测试数据
-    User user = new User("test@example.com");
-
-    // when: 执行被测方法
-    User result = userService.findByEmail("test@example.com");
-
-    // then: 验证结果
-    assertNotNull(result);
-    assertEquals("test@example.com", result.getEmail());
-}
-```
-
-## 17. 测试代码示例
-
-### 17.1. 单元测试示例
-
-<details>
-<summary><b>Java (JUnit 5 + Mockito)</b></summary>
-
-```java
-/**
- * 用户服务测试类
- *
- * @author lvdaxianerplus
- * @date 2024-01-15
- */
-class UserServiceTest {
-
-    private UserService userService;
-    private UserRepository userRepository;
-
-    @BeforeEach
-    void setUp() {
-        userRepository = mock(UserRepository.class);
-        userService = new UserService(userRepository);
-    }
-
-    @Test
-    void should_return_user_when_user_exists() {
-        // given: 准备测试数据
-        User expectedUser = new User("test@example.com");
-        when(userRepository.findByEmail("test@example.com"))
-            .thenReturn(expectedUser);
-
-        // when: 执行被测方法
-        User result = userService.findByEmail("test@example.com");
-
-        // then: 验证结果
-        assertNotNull(result);
-        assertEquals("test@example.com", result.getEmail());
-    }
-
-    @Test
-    void should_throw_exception_when_user_not_found() {
-        // given: 模拟用户不存在
-        when(userRepository.findByEmail("notexist@example.com"))
-            .thenReturn(null);
-
-        // when & then: 验证抛出异常
-        assertThrows(UserNotFoundException.class, () -> {
-            userService.findByEmail("notexist@example.com");
-        });
-    }
-}
-```
-
-</details>
-
-<details>
-<summary><b>Go (testing)</b></summary>
-
-```go
-// Package service 用户服务测试
-package service
-
-import (
-    "testing"
-)
-
-// TestUserService_ShouldReturnUserWhenUserExists 用户服务测试
-//
-// Given: 准备测试数据
-// When: 执行被测方法
-// Then: 验证结果
-//
-// Author: lvdaxianerplus
-// Date: 2024-01-15
-func TestUserService_ShouldReturnUserWhenUserExists(t *testing.T) {
-    // given: 准备测试数据
-    expectedUser := &User{Email: "test@example.com"}
-
-    // when: 执行被测方法
-    result := userService.FindByEmail("test@example.com")
-
-    // then: 验证结果
-    if result == nil {
-        t.Errorf("expected user, got nil")
-    }
-    if result.Email != expectedUser.Email {
-        t.Errorf("expected %s, got %s", expectedUser.Email, result.Email)
-    }
-}
-```
-
-</details>
-
-<details>
-<summary><b>TypeScript / Vue (Vitest)</b></summary>
-
-```typescript
-/**
- * 用户服务测试类
- *
- * @author lvdaxianerplus
- * @date 2024-01-15
- */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-describe('UserService', () => {
-    // given: 准备测试数据
-    let userService: UserService;
-    let userRepository: jest.Mocked<UserRepository>;
-
-    beforeEach(() => {
-        // given: 创建 mock
-        userRepository = {
-            findByEmail: vi.fn(),
-        } as any;
-        userService = new UserService(userRepository);
-    });
-
-    // when: 执行被测方法
-    it('should_return_user_when_user_exists', async () => {
-        // given: 模拟用户存在
-        const expectedUser = { email: 'test@example.com' };
-        userRepository.findByEmail.mockResolvedValue(expectedUser);
-
-        // when: 执行被测方法
-        const result = await userService.findByEmail('test@example.com');
-
-        // then: 验证结果
-        expect(result).not.toBeNull();
-        expect(result?.email).toBe('test@example.com');
-    });
-
-    // then: 验证抛出异常
-    it('should_throw_exception_when_user_not_found', async () => {
-        // given: 模拟用户不存在
-        userRepository.findByEmail.mockResolvedValue(null);
-
-        // when & then: 验证抛出异常
-        await expect(
-            userService.findByEmail('notexist@example.com')
-        ).rejects.toThrow(UserNotFoundException);
-    });
-});
-```
-
-```typescript
-// Vue 组件测试示例
-import { describe, it, expect } from 'vitest';
-import { mount } from '@vue/test-utils';
-import UserCard from './UserCard.vue';
-
-/**
- * UserCard 组件测试
- *
- * @author lvdaxianerplus
- * @date 2024-01-15
- */
-describe('UserCard', () => {
-    // given: 准备测试数据
-    const mockUser = {
-        name: '张三',
-        email: 'zhangsan@example.com',
-    };
-
-    // when: 执行被测方法
-    it('should_display_user_info', () => {
-        // given: 挂载组件
-        const wrapper = mount(UserCard, {
-            props: { user: mockUser },
-        });
-
-        // then: 验证结果
-        expect(wrapper.text()).toContain('张三');
-        expect(wrapper.text()).toContain('zhangsan@example.com');
-    });
-});
-```
-
-</details>
-
-<details>
-<summary><b>Python (pytest)</b></summary>
-
-```python
-"""
-用户服务测试类
-
-Author: lvdaxianerplus
-Date: 2024-01-15
-"""
-import pytest
-from unittest.mock import Mock
-
-
-class TestUserService:
-    """用户服务测试类"""
-
-    def setup_method(self):
-        """测试初始化"""
-        self.user_repository = Mock()
-        self.user_service = UserService(self.user_repository)
-
-    def test_should_return_user_when_user_exists(self):
-        """当用户存在时返回用户"""
-        # given: 准备测试数据
-        expected_user = User(email="test@example.com")
-        self.user_repository.find_by_email.return_value = expected_user
-
-        # when: 执行被测方法
-        result = self.user_service.find_by_email("test@example.com")
-
-        # then: 验证结果
-        assert result is not None
-        assert result.email == "test@example.com"
-
-    def test_should_raise_exception_when_user_not_found(self):
-        """当用户不存在时抛出异常"""
-        # given: 模拟用户不存在
-        self.user_repository.find_by_email.return_value = None
-
-        # when & then: 验证抛出异常
-        with pytest.raises(UserNotFoundException):
-            self.user_service.find_by_email("notexist@example.com")
-```
-
-</details>
-
-### 17.2. 重构示例
-
-**原始代码（超过 20 行）**：
-
-```java
-public void processOrder(Order order) {
-    // 验证订单
-    if (order == null) throw new IllegalArgumentException();
-    if (order.getItems().isEmpty()) throw new IllegalArgumentException();
-    // 计算价格
-    BigDecimal total = BigDecimal.ZERO;
-    for (Item item : order.getItems()) {
-        total = total.add(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
-    }
-    // 应用折扣
-    if (total.compareTo(BigDecimal.valueOf(100)) > 0) {
-        total = total.multiply(BigDecimal.valueOf(0.9));
-    }
-    // 保存订单
-    order.setTotal(total);
-    orderRepository.save(order);
-    // 发送通知
-    notificationService.sendOrderConfirmation(order);
-}
-```
-
-**重构后（所有语言通用模式）**：
-
-```java
-public void processOrder(Order order) {
-    validateOrder(order);
-    BigDecimal total = calculateTotal(order);
-    BigDecimal finalTotal = applyDiscount(total);
-    saveAndNotify(order, finalTotal);
-}
-```
-
-```typescript
-// TypeScript 重构示例
-async function processOrder(order: Order): Promise<void> {
-    await validateOrder(order);
-    const total = calculateTotal(order);
-    const finalTotal = applyDiscount(total);
-    await saveAndNotify(order, finalTotal);
-}
-```
-
-```go
-// Go 重构示例
-func ProcessOrder(order *Order) error {
-    if err := validateOrder(order); err != nil {
-        return err
-    }
-    total := calculateTotal(order)
-    finalTotal := applyDiscount(total)
-    return saveAndNotify(order, finalTotal)
-}
-```
-
-```python
-# Python 重构示例
-def process_order(order: Order) -> None:
-    validate_order(order)
-    total = calculate_total(order)
-    final_total = apply_discount(total)
-    save_and_notify(order, final_total)
-```
-
-## 18. 测试覆盖率报告示例
-
-```
-=============================== coverage report ===============================
-File                                          |   % |  Stmts |  Miss |  Branches |  Miss
-------------------------------------------------------------------------------------------------
-com/example/service/UserService.java           | 100 |     45 |     0 |       10 |     0
-com/example/service/OrderService.java         | 85  |    120 |    18 |       25 |     4
-======================================================================================
-TOTAL                                         | 92  |    165 |    18 |       35 |     4
-=============================== 80% threshold PASSED ===============================
-```
