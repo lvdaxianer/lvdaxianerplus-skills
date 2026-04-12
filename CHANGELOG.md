@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- 添加故事线编写技能 (story-line) (031066e)
+
+- 规范化 CHANGELOG 格式 (2dec3c4)
+
 ### Added
 - 添加故事线编写技能 (story-line)，由 Superpowers brainstorm 驱动，支持 Chrome DevTools MCP 测试验证
 
