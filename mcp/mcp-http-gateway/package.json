@@ -1,0 +1,31 @@
+{
+  "name": "mcp-http-gateway",
+  "version": "1.0.0",
+  "description": "MCP protocol gateway for forwarding tool calls to HTTP REST APIs",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "mcp-http-gateway": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "lru-cache": "^10.0.0",
+    "prom-client": "^15.0.0",
+    "https-proxy-agent": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "baseUrl": "https://api.example.com",
+  "auth": {
+    "type": "bearer",
+    "default": "default-token-key"
+  },
+  "proxy": {
+    "url": "",
+    "auth": {
+      "username": "",
+      "password": ""
+    }
+  },
+  "timeout": {
+    "connect": 5000,
+    "read": 30000,
+    "write": 30000
+  },
+  "retry": {
+    "enabled": false,
+    "maxAttempts": 3,
+    "delay": 1000,
+    "backoff": 2.0,
+    "retryOn": [429, 500, 502, 503, 504]
+  },
+  "circuitBreaker": {
+    "enabled": false,
+    "failureThreshold": 5,
+    "successThreshold": 2,
+    "halfOpenTime": 30000
+  },
+  "cache": {
+    "enabled": false,
+    "ttl": 60000,
+    "maxSize": 1000
+  },
+  "logging": {
+    "level": "info",
+    "logRequest": true,
+    "logResponse": true,
+    "logHeaders": false,
+    "sensitiveHeaders": ["authorization", "x-api-key"]
+  },
+  "metrics": {
+    "enabled": true,
+    "port": 11112
+  },
+  "healthCheck": {
+    "enabled": true,
+    "port": 11112
+  },
+  "server": {
+    "transport": "stdio",
+    "ssePort": 11113,
+    "httpPort": 11112
+  },
+  "tokens": {
+    "A": "sk-token-aaa",
+    "B": "sk-token-bbb"
+  },
+  "tools": {
+    "addAge": {
+      "description": "添加用户年龄",
+      "method": "POST",
+      "path": "/user/age",
+      "token": "A",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "userId": {
+          "description": "用户ID",
+          "type": "string",
+          "required": true
+        },
+        "age": {
+          "description": "年龄（0-150）",
+          "type": "number",
+          "required": true
+        }
+      }
+    },
+    "getUser": {
+      "description": "根据ID获取用户信息",
+      "method": "GET",
+      "path": "/user/{userId}",
+      "token": "A",
+      "queryParams": {
+        "includeDetail": {
+          "description": "是否包含详细信息",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        }
+      }
+    },
+    "queryUser": {
+      "description": "根据用户名查询用户",
+      "method": "GET",
+      "path": "/user",
+      "token": "B",
+      "queryParams": {
+        "name": {
+          "description": "用户名",
+          "type": "string",
+          "required": true
+        },
+        "city": {
+          "description": "所在城市",
+          "type": "string",
+          "required": false
+        }
+      }
+    }
+  }
+}
