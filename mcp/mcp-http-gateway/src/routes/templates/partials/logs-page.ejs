@@ -1,0 +1,38 @@
+<!-- Logs Page - 日志详情页面 -->
+<div id="page-logs" class="page">
+  <div class="bento-grid">
+    <div class="card span-12">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        日志查询
+      </div>
+      <div class="form-row" style="margin-bottom: 16px;">
+        <div class="form-group">
+          <label class="form-label">开始日期</label>
+          <input type="date" id="log-start-date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">结束日期</label>
+          <input type="date" id="log-end-date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">工具名称</label>
+          <input type="text" id="log-tool-filter" class="form-input" placeholder="输入工具名称">
+        </div>
+        <div class="form-group" style="flex: 0 0 auto;">
+          <label class="form-label">&nbsp;</label>
+          <button class="btn btn-primary" onclick="searchLogs()">查询</button>
+        </div>
+      </div>
+      <div class="table-wrapper" style="max-height: 500px; overflow-y: auto;">
+        <table>
+          <thead><tr><th>时间</th><th>工具</th><th>方法</th><th>URL</th><th>状态</th><th>耗时</th></tr></thead>
+          <tbody id="logs-table-body">
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">请选择日期后查询</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="logs-pagination" style="margin-top: 16px; display: flex; gap: 8px; align-items: center;"></div>
+    </div>
+  </div>
+</div>

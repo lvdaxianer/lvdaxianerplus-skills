@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Gateway Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Ace Editor CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/mode-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ext-language_tools.min.js"></script>
+  <style>
+    <%- css %>
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>MCP Gateway</h1>
+      <nav class="header-nav">
+        <button class="nav-btn active" data-page="overview">总览</button>
+        <button class="nav-btn" data-page="tools">工具管理</button>
+        <button class="nav-btn" data-page="logs">日志详情</button>
+        <button class="nav-btn" data-page="stats">统计分析</button>
+        <button class="nav-btn" data-page="alerts">告警管理</button>
+        <button class="nav-btn" data-page="config">配置编辑</button>
+      </nav>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <select id="refresh-interval" style="padding:6px 12px;border-radius:6px;border:1px solid var(--border);font-size:13px;">
+          <option value="5">5秒</option>
+          <option value="10" selected>10秒</option>
+          <option value="15">15秒</option>
+          <option value="30">30秒</option>
+          <option value="60">60秒</option>
+          <option value="0">关闭自动刷新</option>
+        </select>
+        <button class="nav-btn" id="refresh-btn" style="background:var(--primary);color:white;border-color:var(--primary);">
+          <svg style="width:16px;height:16px;margin-right:4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          刷新
+        </button>
+      </div>
+    </header>
+
+    <!-- Overview Page -->
+    <%- include('partials/overview-page', { data: data }) %>
+
+    <!-- Tools Page -->
+    <%- include('partials/tools-page') %>
+
+    <!-- Logs Page -->
+    <%- include('partials/logs-page') %>
+
+    <!-- Stats Page -->
+    <%- include('partials/stats-page') %>
+
+    <!-- Alerts Page -->
+    <%- include('partials/alerts-page') %>
+
+    <!-- Config Page -->
+    <%- include('partials/config-page') %>
+
+    <!-- Modals -->
+    <%- include('partials/modals') %>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- JavaScript -->
+    <%- include('partials/scripts') %>
+  </div>
+</body>
+</html>

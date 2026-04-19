@@ -1,0 +1,105 @@
+<!-- Overview Page - 总览页面 -->
+<div id="page-overview" class="page active">
+  <div class="bento-grid">
+    <!-- Stats Cards -->
+    <div class="card span-3">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        总请求数
+      </div>
+      <div class="stat-value"><%= data.metrics.aggregated.totalRequests %></div>
+      <div class="stat-label">累计调用次数</div>
+    </div>
+
+    <div class="card span-3 stat-success">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        成功率
+      </div>
+      <div class="stat-value"><%= data.metrics.aggregated.successRate %></div>
+      <div class="stat-label">请求成功占比</div>
+    </div>
+
+    <div class="card span-3 stat-error" id="error-card" style="cursor: pointer;">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        错误数
+      </div>
+      <div class="stat-value"><%= data.metrics.aggregated.totalErrors %></div>
+      <div class="stat-label">失败请求（点击查看详情）</div>
+    </div>
+
+    <div class="card span-3">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        平均延迟
+      </div>
+      <div class="stat-value"><%= Math.round(data.metrics.aggregated.avgDuration) %>ms</div>
+      <div class="stat-label">响应时间</div>
+    </div>
+
+    <!-- Circuit Breakers -->
+    <div class="card span-6">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        熔断器状态
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>工具</th><th>状态</th><th>失败</th><th>成功</th></tr></thead>
+          <tbody>
+            <% Object.entries(data.circuitBreakers).forEach(([name, cb]) => { %>
+            <tr>
+              <td><%= name %></td>
+              <td><span class="badge badge-<%= cb.state.toLowerCase().replace('_', '') %>"><%= cb.state %></span></td>
+              <td><%= cb.failures %></td>
+              <td><%= cb.successes %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Cache -->
+    <div class="card span-6" id="cache-card" style="cursor: pointer;">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+        缓存状态（点击查看详情）
+      </div>
+      <div style="display: flex; align-items: center; gap: 24px;">
+        <div>
+          <div style="font-size: 28px; font-weight: 700;"><%= data.cache.size %></div>
+          <div style="color: var(--text-muted); font-size: 14px;">已缓存</div>
+        </div>
+        <div style="flex: 1; background: #E2E8F0; height: 8px; border-radius: 4px; overflow: hidden;">
+          <div style="background: var(--primary); height: 100%; width: <%= (data.cache.size / data.cache.maxSize * 100).toFixed(1) %>%;"></div>
+        </div>
+        <div>
+          <div style="font-size: 28px; font-weight: 700; color: var(--text-muted);"><%= data.cache.maxSize %></div>
+          <div style="color: var(--text-muted); font-size: 14px;">最大容量</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Logs -->
+    <div class="card span-12">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        最近请求
+      </div>
+      <div class="logs-list" style="display:flex;flex-direction:column;gap:8px;">
+        <% (data.logs || []).slice(0, 15).forEach(function(l) { %>
+        <div class="log-item" style="display:flex;align-items:center;gap:12px;padding:8px 12px;background:#F8FAFC;border-radius:8px;">
+          <span class="log-time" style="min-width:80px;color:#64748B;"><%= new Date(l.timestamp).toLocaleTimeString() %></span>
+          <span style="min-width:100px;font-weight:600;color:#334155;"><%= l.tool_name %></span>
+          <span style="min-width:60px;padding:2px 8px;border-radius:4px;background:<%= l.method === 'GET' ? '#DBEAFE' : l.method === 'POST' ? '#FEF3C7' : '#E5E7EB' %>;color:<%= l.method === 'GET' ? '#1D4ED8' : l.method === 'POST' ? '#B45309' : '#374151' %>;font-size:12px;font-weight:500;"><%= l.method || 'N/A' %></span>
+          <span style="flex:1;color:#64748B;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= l.url || l.message || '-' %></span>
+          <span style="min-width:50px;padding:2px 8px;border-radius:4px;background:<%= (l.response_status || 0) >= 400 || l.type === 'error' ? '#FEE2E2' : '#DCFCE7' %>;color:<%= (l.response_status || 0) >= 400 || l.type === 'error' ? '#B91C1C' : '#166534' %>;font-size:12px;font-weight:600;"><%= l.response_status || (l.type === 'error' ? 'ERR' : 'OK') %></span>
+          <span style="min-width:50px;color:#94A3B8;font-size:12px;"><%= l.duration ? l.duration + 'ms' : '-' %></span>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</div>

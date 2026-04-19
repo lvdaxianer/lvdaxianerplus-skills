@@ -1,0 +1,71 @@
+<!-- Stats Page - 统计分析页面 -->
+<div id="page-stats" class="page">
+  <div class="bento-grid">
+    <!-- 趋势图表 -->
+    <div class="card span-6">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+        请求趋势（近7天）
+      </div>
+      <div style="height: 250px;">
+        <canvas id="trend-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="card span-6">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        错误率趋势
+      </div>
+      <div style="height: 250px;">
+        <canvas id="error-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Top N 排行 -->
+    <div class="card span-4">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        Top 10 请求次数
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>工具</th><th>次数</th><th>成功率</th></tr></thead>
+          <tbody id="top-requests-body">
+            <tr><td colspan="3" style="text-align:center;color:var(--text-muted);">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card span-4">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Top 10 错误次数
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>工具</th><th>错误</th><th>成功率</th></tr></thead>
+          <tbody id="top-errors-body">
+            <tr><td colspan="3" style="text-align:center;color:var(--text-muted);">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card span-4">
+      <div class="card-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Top 10 平均延迟
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>工具</th><th>延迟</th><th>次数</th></tr></thead>
+          <tbody id="top-duration-body">
+            <tr><td colspan="3" style="text-align:center;color:var(--text-muted);">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,1042 @@
+<!-- Dashboard JavaScript -->
+<script>
+  // State
+  let globalMockEnabled = false;
+  let currentTool = '';
+  let refreshTimer = null;
+  let refreshInterval = 10000;
+  let confirmCallback = null;
+
+  // Ace Editor 实例
+  let mockResponseEditor = null;
+  let configEditorInstance = null;
+
+  // 初始化 Mock 响应编辑器
+  function initMockResponseEditor() {
+    const container = document.getElementById('mock-response-editor');
+    // 条件注释：容器不存在或编辑器已初始化时跳过
+    if (!container || mockResponseEditor) {
+      return;
+    } else {
+      mockResponseEditor = ace.edit(container);
+      mockResponseEditor.setTheme('ace/theme/chrome');
+      mockResponseEditor.session.setMode('ace/mode/json');
+      mockResponseEditor.setOptions({
+        showPrintMargin: false,
+        fontSize: '14px',
+        tabSize: 2,
+        useSoftTabs: true
+      });
+      mockResponseEditor.setValue('{\n  "success": true\n}', -1);
+    }
+  }
+
+  // 初始化配置编辑器
+  function initConfigEditor() {
+    const container = document.getElementById('config-editor');
+    // 条件注释：容器不存在或编辑器已初始化时跳过
+    if (!container || configEditorInstance) {
+      return;
+    } else {
+      configEditorInstance = ace.edit(container);
+      configEditorInstance.setTheme('ace/theme/chrome');
+      configEditorInstance.session.setMode('ace/mode/json');
+      configEditorInstance.setOptions({
+        showPrintMargin: false,
+        fontSize: '14px',
+        tabSize: 2,
+        useSoftTabs: true,
+        wrap: true
+      });
+    }
+  }
+
+  // API helper
+  async function api(path, method = 'GET', body = null) {
+    const options = { method };
+    if (body) {
+      options.headers = { 'Content-Type': 'application/json' };
+      options.body = JSON.stringify(body);
+    }
+    const res = await fetch(path, options);
+    return res.json();
+  }
+
+  // Toast helper
+  function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    toast.innerHTML = '<span>' + message + '</span>';
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  // Confirm dialog helper
+  function showConfirmDialog(message, callback, title = '确认操作') {
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-message').textContent = message;
+    confirmCallback = callback;
+    document.getElementById('confirm-modal').classList.add('show');
+  }
+
+  function closeConfirmModal() {
+    document.getElementById('confirm-modal').classList.remove('show');
+    confirmCallback = null;
+  }
+
+  // Auto refresh
+  function startAutoRefresh() {
+    const intervalSelect = document.getElementById('refresh-interval');
+    refreshInterval = parseInt(intervalSelect.value, 10) * 1000;
+
+    if (refreshTimer) clearInterval(refreshTimer);
+    if (refreshInterval <= 0) return;
+
+    refreshTimer = setInterval(() => {
+      if (document.getElementById('page-overview').classList.contains('active')) {
+        refreshDashboardData();
+      }
+    }, refreshInterval);
+  }
+
+  document.getElementById('refresh-interval').addEventListener('change', startAutoRefresh);
+  document.getElementById('refresh-btn').addEventListener('click', () => refreshDashboardData());
+
+  // Navigation
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + btn.dataset.page).classList.add('active');
+      if (btn.dataset.page === 'tools') loadTools();
+      if (btn.dataset.page === 'stats') loadStatsPage();
+      if (btn.dataset.page === 'alerts') loadAlerts();
+      if (btn.dataset.page === 'logs') { searchLogs(); }
+      if (btn.dataset.page === 'config') loadConfig();
+    });
+  });
+
+  // Refresh dashboard data
+  async function refreshDashboardData() {
+    const data = await api('/api/dashboard');
+    document.querySelector('.stat-value').textContent = data.metrics.aggregated.totalRequests;
+    showToast('数据已刷新', 'info');
+  }
+
+  // Load tools
+  async function loadTools() {
+    const data = await api('/api/tools');
+    globalMockEnabled = data.globalMockEnabled;
+    const toggleBtn = document.getElementById('global-mock-toggle');
+    toggleBtn.textContent = globalMockEnabled ? 'Mock 已开启' : 'Mock 已关闭';
+    toggleBtn.className = globalMockEnabled ? 'btn btn-success' : 'btn btn-secondary';
+
+    const tbody = document.getElementById('tools-body');
+    tbody.innerHTML = data.tools.map(t => {
+      const isOn = t.mockEnabled;
+      return '<tr>' +
+        '<td><strong>' + t.name + '</strong></td>' +
+        '<td>' + t.method + '</td>' +
+        '<td style="color: var(--text-muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis;">' + t.path + '</td>' +
+        '<td><span class="badge ' + (isOn ? 'badge-on' : 'badge-off') + '">' + (isOn ? '开启' : '关闭') + '</span></td>' +
+        '<td>' +
+          '<button class="btn btn-sm ' + (isOn ? 'btn-danger' : 'btn-success') + '" onclick="toggleMock(\'' + t.name + '\')">' + (isOn ? '关闭' : '开启') + '</button> ' +
+          '<button class="btn btn-sm btn-primary" onclick="openModal(\'' + t.name + '\')">配置</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  // Global mock toggle
+  document.getElementById('global-mock-toggle').addEventListener('click', async () => {
+    globalMockEnabled = !globalMockEnabled;
+    await api('/api/mock', 'POST', { enabled: globalMockEnabled });
+    loadTools();
+  });
+
+  // Toggle single tool mock
+  async function toggleMock(name) {
+    const tool = (await api('/api/tools')).tools.find(t => t.name === name);
+    await api('/api/tools/' + name + '/mock', 'PUT', { enabled: !tool.mockEnabled });
+    loadTools();
+  }
+
+  // Modal helpers
+  function openModal(name) {
+    currentTool = name;
+    document.getElementById('modal-tool-name').textContent = name;
+    document.getElementById('mock-modal').classList.add('show');
+    // 条件注释：编辑器未初始化时初始化，已初始化时跳过
+    if (!mockResponseEditor) {
+      initMockResponseEditor();
+    }
+    api('/api/tools/' + name + '/mock').then(data => {
+      const config = data.mockConfig || {};
+      document.getElementById('mock-delay').value = config.delay || 0;
+      document.getElementById('mock-status').value = config.statusCode || 200;
+      // 条件注释：编辑器存在时使用 setValue，不存在时跳过
+      if (mockResponseEditor) {
+        mockResponseEditor.setValue(config.response ? JSON.stringify(config.response, null, 2) : '{\n  "success": true\n}', -1);
+      }
+      document.getElementById('mock-preset').value = '';
+    });
+  }
+
+  function closeModal() {
+    document.getElementById('mock-modal').classList.remove('show');
+  }
+
+  function formatMockJson() {
+    // 条件注释：编辑器存在时使用 Ace Editor，不存在时跳过
+    if (!mockResponseEditor) {
+      showToast('编辑器未初始化', 'error');
+      return;
+    } else {
+      try {
+        const parsed = JSON.parse(mockResponseEditor.getValue());
+        mockResponseEditor.setValue(JSON.stringify(parsed, null, 2), -1);
+        showToast('JSON 已格式化', 'success');
+      } catch (e) {
+        showToast('JSON 格式错误: ' + e.message, 'error');
+      }
+    }
+  }
+
+  // Mock presets
+  const MOCK_PRESETS = {
+    'success': { name: '成功响应', delay: 0, status: 200, response: { success: true, message: '操作成功' } },
+    'error': { name: '错误响应', delay: 0, status: 500, response: { success: false, error: '服务器错误' } },
+    'notFound': { name: '资源不存在', delay: 0, status: 404, response: { success: false, error: '资源不存在' } },
+    'timeout': { name: '超时模拟', delay: 5000, status: 200, response: { success: true, message: '延迟响应' } },
+    'emptyList': { name: '空列表数据', delay: 0, status: 200, response: { success: true, data: { items: [] } } },
+    'authToken': { name: '认证令牌', delay: 0, status: 200, response: { success: true, token: 'mock-token' } }
+  };
+
+  function applyMockPreset() {
+    const presetKey = document.getElementById('mock-preset').value;
+    // 条件注释：未选择预设时跳过，选择预设时应用配置
+    if (!presetKey) {
+      return;
+    } else {
+      const preset = MOCK_PRESETS[presetKey];
+      document.getElementById('mock-delay').value = preset.delay;
+      document.getElementById('mock-status').value = preset.status;
+      // 条件注释：编辑器存在时使用 setValue，不存在时跳过
+      if (mockResponseEditor) {
+        mockResponseEditor.setValue(JSON.stringify(preset.response, null, 2), -1);
+      }
+      showToast('已应用: ' + preset.name, 'info');
+    }
+  }
+
+  async function saveMockConfig() {
+    const delay = parseInt(document.getElementById('mock-delay').value) || 0;
+    const status = parseInt(document.getElementById('mock-status').value) || 200;
+    let response = {};
+    // 条件注释：编辑器存在时使用 getValue，不存在时使用空对象
+    if (mockResponseEditor) {
+      try {
+        response = JSON.parse(mockResponseEditor.getValue());
+      } catch (e) {
+        showToast('JSON 格式错误: ' + e.message, 'error');
+        return;
+      }
+    } else {
+      response = {};
+    }
+    await api('/api/tools/' + currentTool + '/mock', 'PUT', { enabled: true, delay, statusCode: status, response });
+    showToast('Mock 配置已保存', 'success');
+    closeModal();
+    loadTools();
+  }
+
+  // Error modal
+  document.getElementById('error-card').addEventListener('click', showErrorDetails);
+  async function showErrorDetails() {
+    const modal = document.getElementById('error-modal');
+    const body = document.getElementById('error-modal-body');
+    modal.classList.add('show');
+    body.innerHTML = '<p style="text-align:center;padding:20px;">加载中...</p>';
+    try {
+      const errors = await api('/api/errors?limit=50');
+      if (errors.length === 0) {
+        body.innerHTML = '<p style="text-align:center;padding:20px;color:#64748B;">暂无错误记录</p>';
+        return;
+      }
+      let html = '';
+      errors.forEach(e => {
+        html += '<div style="border-bottom:1px solid #E2E8F0;padding:12px 0;">';
+        html += '<div style="font-weight:600;color:#EF4444;">' + e.tool_name + '</div>';
+        html += '<p style="color:#334155;">' + e.message + '</p>';
+        html += '</div>';
+      });
+      body.innerHTML = html;
+    } catch (err) {
+      body.innerHTML = '<p style="text-align:center;color:#EF4444;">加载失败</p>';
+    }
+  }
+
+  function closeErrorModal() {
+    document.getElementById('error-modal').classList.remove('show');
+  }
+
+  // Cache modal
+  document.getElementById('cache-card').addEventListener('click', showCacheDetails);
+  async function showCacheDetails() {
+    const modal = document.getElementById('cache-modal');
+    const body = document.getElementById('cache-modal-body');
+    modal.classList.add('show');
+    body.innerHTML = '<p style="text-align:center;padding:20px;">加载中...</p>';
+    try {
+      const entries = await api('/api/cache/entries');
+      if (entries.length === 0) {
+        body.innerHTML = '<p style="text-align:center;color:#64748B;">暂无缓存数据</p>';
+        return;
+      }
+      let html = '';
+      entries.forEach(e => {
+        html += '<div style="border-bottom:1px solid #E2E8F0;padding:12px 0;">';
+        html += '<div style="font-weight:600;color:#3B82F6;">' + e.toolName + '</div>';
+        html += '<button class="btn btn-sm btn-danger" onclick="clearCacheByToolName(\'' + e.toolName + '\')">删除</button>';
+        html += '</div>';
+      });
+      body.innerHTML = html;
+    } catch (err) {
+      body.innerHTML = '<p style="text-align:center;color:#EF4444;">加载失败</p>';
+    }
+  }
+
+  function closeCacheModal() {
+    document.getElementById('cache-modal').classList.remove('show');
+  }
+
+  async function clearAllCache() {
+    showConfirmDialog('确定要清空所有缓存吗？', async () => {
+      await api('/api/cache', 'DELETE');
+      showToast('缓存已清空', 'success');
+      showCacheDetails();
+    }, '清空缓存确认');
+  }
+
+  async function clearCacheByToolName(toolName) {
+    showConfirmDialog('确定要删除该工具的缓存吗？', async () => {
+      await api('/api/cache/' + toolName, 'DELETE');
+      showToast('缓存已删除', 'success');
+      showCacheDetails();
+    });
+  }
+
+  // Logs page
+  let logsCurrentPage = 1;
+  async function searchLogs() {
+    const startDate = document.getElementById('log-start-date').value;
+    const endDate = document.getElementById('log-end-date').value;
+    const tool = document.getElementById('log-tool-filter').value;
+    const params = new URLSearchParams({ page: logsCurrentPage.toString(), pageSize: '20' });
+    if (startDate) params.set('startDate', startDate);
+    if (endDate) params.set('endDate', endDate);
+    if (tool) params.set('tool', tool);
+    try {
+      const result = await api('/api/logs/paginated?' + params.toString());
+      renderLogsTable(result.data);
+      renderLogsPagination(result.pagination);
+    } catch (err) {
+      showToast('查询失败', 'error');
+    }
+  }
+
+  function renderLogsTable(data) {
+    const tbody = document.getElementById('logs-table-body');
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">无数据</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(l => {
+      return '<tr>' +
+        '<td>' + new Date(l.timestamp).toLocaleString() + '</td>' +
+        '<td>' + l.tool_name + '</td>' +
+        '<td>' + (l.method || 'N/A') + '</td>' +
+        '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">' + (l.url || '-') + '</td>' +
+        '<td><span style="padding:2px 8px;border-radius:4px;background:' + (l.response_status >= 400 ? '#FEE2E2;color:#B91C1C' : '#DCFCE7;color:#166534') + ';">' + (l.response_status || 'OK') + '</span></td>' +
+        '<td>' + (l.duration ? l.duration + 'ms' : '-') + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function renderLogsPagination(p) {
+    const container = document.getElementById('logs-pagination');
+    if (p.totalPages <= 1) {
+      container.innerHTML = '<span style="color:var(--text-muted);">共 ' + p.total + ' 条</span>';
+      return;
+    }
+    container.innerHTML =
+      '<button class="btn btn-sm btn-secondary" onclick="logsGoPage(1)" ' + (p.page === 1 ? 'disabled' : '') + '>首页</button>' +
+      '<button class="btn btn-sm btn-secondary" onclick="logsGoPage(' + (p.page - 1) + ')" ' + (p.page === 1 ? 'disabled' : '') + '>上一页</button>' +
+      '<span style="padding:0 12px;">' + p.page + '/' + p.totalPages + '</span>' +
+      '<button class="btn btn-sm btn-secondary" onclick="logsGoPage(' + (p.page + 1) + ')" ' + (!p.hasMore ? 'disabled' : '') + '>下一页</button>';
+  }
+
+  function logsGoPage(page) {
+    logsCurrentPage = page;
+    searchLogs();
+  }
+
+  // Stats page
+  let trendChart = null;
+  let errorChart = null;
+
+  async function loadStatsPage() {
+    try {
+      const trendData = await api('/api/trend?days=7');
+      renderTrendCharts(trendData);
+
+      const topRequests = await api('/api/top-tools?type=requests&limit=10');
+      const topErrors = await api('/api/top-tools?type=errors&limit=10');
+      const topDuration = await api('/api/top-tools?type=duration&limit=10');
+
+      renderTopNTable('top-requests-body', topRequests, 'requests');
+      renderTopNTable('top-errors-body', topErrors, 'errors');
+      renderTopNTable('top-duration-body', topDuration, 'duration');
+    } catch (err) {
+      showToast('加载统计数据失败', 'error');
+    }
+  }
+
+  function renderTrendCharts(data) {
+    if (!data || data.length === 0) return;
+    const labels = data.map(d => d.date);
+    const requests = data.map(d => d.requests);
+    const errors = data.map(d => d.errors);
+
+    const trendCtx = document.getElementById('trend-chart');
+    if (trendCtx) {
+      if (trendChart) trendChart.destroy();
+      trendChart = new Chart(trendCtx, {
+        type: 'line',
+        data: { labels, datasets: [{ label: '请求次数', data: requests, borderColor: '#3B82F6', fill: true }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    const errorCtx = document.getElementById('error-chart');
+    if (errorCtx) {
+      if (errorChart) errorChart.destroy();
+      errorChart = new Chart(errorCtx, {
+        type: 'line',
+        data: { labels, datasets: [{ label: '错误次数', data: errors, borderColor: '#EF4444', fill: true }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+  }
+
+  function renderTopNTable(tableId, data, type) {
+    const tbody = document.getElementById(tableId);
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">无数据</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(t => {
+      if (type === 'duration') {
+        return '<tr><td>' + t.toolName + '</td><td>' + t.avgDuration + 'ms</td><td>' + t.requests + '</td></tr>';
+      } else {
+        return '<tr><td>' + t.toolName + '</td><td>' + (type === 'requests' ? t.requests : t.errors) + '</td><td>' + t.successRate + '%</td></tr>';
+      }
+    }).join('');
+  }
+
+  // Alerts page
+  async function loadAlerts() {
+    const severity = document.getElementById('alert-severity-filter').value;
+    const resolved = document.getElementById('alert-resolved-filter').value;
+    try {
+      let alerts;
+      if (resolved === 'false') {
+        alerts = await api('/api/alerts?unresolved=true');
+      } else {
+        alerts = await api('/api/alerts?limit=50');
+      }
+      if (severity) {
+        alerts = alerts.filter(a => a.severity === severity);
+      }
+      if (resolved === 'true') {
+        alerts = alerts.filter(a => a.resolved_at);
+      }
+      renderAlertsTable(alerts);
+    } catch (err) {
+      showToast('加载告警失败', 'error');
+    }
+  }
+
+  function renderAlertsTable(data) {
+    const tbody = document.getElementById('alerts-table-body');
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">无告警</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(a => {
+      const resolvedBadge = a.resolved_at
+        ? '<span style="padding:2px 8px;border-radius:4px;background:#DCFCE7;color:#166534;">已解决</span>'
+        : '<span style="padding:2px 8px;border-radius:4px;background:#FEE2E2;color:#B91C1C;">未解决</span>';
+      const actionBtn = a.resolved_at ? '' : '<button class="btn btn-sm btn-success" onclick="resolveAlert(' + a.id + ')">解决</button>';
+      return '<tr>' +
+        '<td>' + new Date(a.timestamp).toLocaleString() + '</td>' +
+        '<td>' + a.alert_type + '</td>' +
+        '<td><span style="padding:2px 8px;border-radius:4px;background:' + (a.severity === 'critical' ? '#B91C1C' : '#D97706') + ';color:white;">' + a.severity + '</span></td>' +
+        '<td>' + (a.tool_name || '-') + '</td>' +
+        '<td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;">' + a.message + '</td>' +
+        '<td>' + resolvedBadge + '</td>' +
+        '<td>' + actionBtn + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  async function resolveAlert(id) {
+    showConfirmDialog('确定要解决此告警吗？', async () => {
+      await api('/api/alerts/' + id + '/resolve', 'POST');
+      showToast('告警已解决', 'success');
+      loadAlerts();
+    }, '解决告警');
+  }
+
+  async function resolveAllAlerts() {
+    showConfirmDialog('确定要批量解决所有未解决的告警吗？', async () => {
+      const alerts = await api('/api/alerts?unresolved=true');
+      for (const a of alerts) {
+        await api('/api/alerts/' + a.id + '/resolve', 'POST');
+      }
+      showToast('已批量解决 ' + alerts.length + ' 个告警', 'success');
+      loadAlerts();
+    }, '批量解决告警');
+  }
+
+  // Config page
+  async function loadConfig() {
+    // 条件注释：编辑器未初始化时初始化，已初始化时跳过
+    if (!configEditorInstance) {
+      initConfigEditor();
+    }
+    try {
+      const config = await api('/api/config');
+      // 条件注释：编辑器存在时使用 setValue，不存在时跳过
+      if (configEditorInstance) {
+        configEditorInstance.setValue(JSON.stringify(config, null, 2), -1);
+      }
+      const backups = await api('/api/config/backups');
+      renderBackupList(backups);
+      showToast('配置已加载', 'success');
+    } catch (err) {
+      showToast('加载配置失败', 'error');
+    }
+  }
+
+  function renderBackupList(backups) {
+    const container = document.getElementById('backup-list');
+    // 条件注释：无备份时显示空态，有备份时显示列表
+    if (!backups || backups.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;">暂无备份</div>';
+      return;
+    } else {
+      container.innerHTML = backups.map(b => {
+        // 解析时间戳格式：2026-04-19-15-41-55-847Z -> ISO Date
+        const timestampStr = b.timestamp || '';
+        // 格式：YYYY-MM-DD-HH-MM-SS-msZ
+        const parts = timestampStr.split('-');
+        let displayDate = '未知时间';
+        // 条件注释：时间戳格式正确时解析日期，格式不正确时显示默认值
+        if (parts.length >= 6) {
+          const isoStr = parts[0] + '-' + parts[1] + '-' + parts[2] + 'T' + parts[3] + ':' + parts[4] + ':' + parts[5];
+          displayDate = new Date(isoStr).toLocaleString();
+        }
+        return '<div style="padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;">' +
+          '<div style="font-weight:600;">' + b.file + '</div>' +
+          '<div style="font-size:12px;color:var(--text-muted);">' + displayDate + '</div>' +
+          '<button class="btn btn-sm btn-secondary" onclick="restoreBackup(\'' + b.file + '\')">回滚</button>' +
+        '</div>';
+      }).join('');
+    }
+  }
+
+  async function restoreBackup(file) {
+    showConfirmDialog('确定要回滚到备份版本 ' + file + ' 吗？', async () => {
+      await api('/api/config/restore/' + encodeURIComponent(file), 'POST');
+      showToast('已回滚到 ' + file, 'success');
+      loadConfig();
+    }, '配置回滚确认');
+  }
+
+  function formatConfigJson() {
+    // 条件注释：编辑器存在时使用 Ace Editor，不存在时跳过
+    if (!configEditorInstance) {
+      showToast('编辑器未初始化', 'error');
+      return;
+    } else {
+      try {
+        const parsed = JSON.parse(configEditorInstance.getValue());
+        configEditorInstance.setValue(JSON.stringify(parsed, null, 2), -1);
+        showToast('JSON 已格式化', 'success');
+        document.getElementById('config-error').style.display = 'none';
+      } catch (e) {
+        document.getElementById('config-error').textContent = 'JSON 格式错误: ' + e.message;
+        document.getElementById('config-error').style.display = 'block';
+      }
+    }
+  }
+
+  async function validateConfig() {
+    // 条件注释：编辑器存在时使用 Ace Editor，不存在时跳过
+    if (!configEditorInstance) {
+      showToast('编辑器未初始化', 'error');
+      return;
+    } else {
+      try {
+        const config = JSON.parse(configEditorInstance.getValue());
+        const result = await api('/api/config/validate', 'POST', config);
+        // 条件注释：校验通过时显示成功，校验失败时显示错误
+        if (result.valid) {
+          showToast('配置校验通过', 'success');
+          document.getElementById('config-error').style.display = 'none';
+        } else {
+          document.getElementById('config-error').textContent = '配置校验失败: ' + (result.errors || []).join(', ');
+          document.getElementById('config-error').style.display = 'block';
+        }
+      } catch (e) {
+        document.getElementById('config-error').textContent = 'JSON 格式错误: ' + e.message;
+        document.getElementById('config-error').style.display = 'block';
+      }
+    }
+  }
+
+  async function saveConfig() {
+    // 条件注释：编辑器存在时使用 Ace Editor，不存在时跳过
+    if (!configEditorInstance) {
+      showToast('编辑器未初始化', 'error');
+      return;
+    } else {
+      try {
+        const config = JSON.parse(configEditorInstance.getValue());
+        const validateResult = await api('/api/config/validate', 'POST', config);
+        // 条件注释：校验失败时阻止保存，校验通过时继续
+        if (!validateResult.valid) {
+          document.getElementById('config-error').textContent = '配置校验失败';
+          document.getElementById('config-error').style.display = 'block';
+          return;
+        } else {
+          showConfirmDialog('保存配置将自动创建备份，确定要保存吗？', async () => {
+            await api('/api/config', 'PUT', config);
+            showToast('配置已保存并自动备份', 'success');
+            document.getElementById('config-error').style.display = 'none';
+            const backups = await api('/api/config/backups');
+            renderBackupList(backups);
+          }, '保存配置确认');
+        }
+      } catch (e) {
+        document.getElementById('config-error').textContent = 'JSON 格式错误: ' + e.message;
+        document.getElementById('config-error').style.display = 'block';
+      }
+    }
+  }
+
+  // Confirm button handler
+  document.getElementById('confirm-action-btn').addEventListener('click', function() {
+    if (confirmCallback) {
+      confirmCallback();
+    }
+    closeConfirmModal();
+  });
+
+  // Escape key to close modals
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeModal();
+      closeErrorModal();
+      closeCacheModal();
+      closeConfirmModal();
+    }
+  });
+
+  // Modal backdrop click
+  document.getElementById('mock-modal').addEventListener('click', function(e) {
+    if (e.target.id === 'mock-modal') closeModal();
+  });
+  document.getElementById('error-modal').addEventListener('click', function(e) {
+    if (e.target.id === 'error-modal') closeErrorModal();
+  });
+  document.getElementById('cache-modal').addEventListener('click', function(e) {
+    if (e.target.id === 'cache-modal') closeCacheModal();
+  });
+  document.getElementById('confirm-modal').addEventListener('click', function(e) {
+    if (e.target.id === 'confirm-modal') closeConfirmModal();
+  });
+
+  // Init
+  startAutoRefresh();
+
+  // =====================
+  // 配置属性说明面板
+  // =====================
+
+  /**
+   * 配置属性说明数据
+   *
+   * @author lvdaxianerplus
+   * @date 2026-04-20
+   */
+  const CONFIG_REFERENCE = {
+    baseUrl: { type: 'string', desc: 'API 基础 URL，所有工具路径的拼接基础' },
+    auth: {
+      type: 'object',
+      desc: '全局认证配置',
+      children: {
+        type: { type: 'string', desc: '认证类型：bearer/basic/apiKey' },
+        default: { type: 'string', desc: '默认令牌键名引用' }
+      }
+    },
+    proxy: {
+      type: 'object',
+      desc: '代理服务器配置',
+      children: {
+        url: { type: 'string', desc: '代理服务器 URL' },
+        auth: {
+          type: 'object',
+          desc: '代理认证信息',
+          children: {
+            username: { type: 'string', desc: '代理用户名' },
+            password: { type: 'string', desc: '代理密码' }
+          }
+        }
+      }
+    },
+    timeout: {
+      type: 'object',
+      desc: '超时配置（毫秒）',
+      children: {
+        connect: { type: 'number', desc: '连接超时，默认 5000ms' },
+        read: { type: 'number', desc: '读取超时，默认 30000ms' },
+        write: { type: 'number', desc: '写入超时，默认 30000ms' }
+      }
+    },
+    retry: {
+      type: 'object',
+      desc: '重试配置',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用重试，默认 false' },
+        maxAttempts: { type: 'number', desc: '最大重试次数，默认 3' },
+        delay: { type: 'number', desc: '初始重试延迟（ms），默认 1000' },
+        backoff: { type: 'number', desc: '退避倍数，默认 2.0' },
+        retryOn: { type: 'array', desc: '触发重试的 HTTP 状态码，默认 [429,500,502,503,504]' }
+      }
+    },
+    circuitBreaker: {
+      type: 'object',
+      desc: '熔断器配置',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用熔断器，默认 false' },
+        failureThreshold: { type: 'number', desc: '触发熔断的失败次数，默认 5' },
+        successThreshold: { type: 'number', desc: '恢复熔断的成功次数，默认 2' },
+        halfOpenTime: { type: 'number', desc: '半开状态持续时间（ms），默认 30000' }
+      }
+    },
+    cache: {
+      type: 'object',
+      desc: '缓存配置',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用缓存，默认 false' },
+        ttl: { type: 'number', desc: '缓存有效期（ms），默认 60000' },
+        maxSize: { type: 'number', desc: '最大缓存条数，默认 1000' }
+      }
+    },
+    logging: {
+      type: 'object',
+      desc: '日志配置',
+      children: {
+        level: { type: 'string', desc: '日志级别：debug/info/warn/error' },
+        logRequest: { type: 'boolean', desc: '是否记录请求日志' },
+        logResponse: { type: 'boolean', desc: '是否记录响应日志' },
+        logHeaders: { type: 'boolean', desc: '是否记录请求头' },
+        sensitiveHeaders: { type: 'array', desc: '敏感请求头列表（脱敏）' },
+        file: {
+          type: 'object',
+          desc: '文件日志配置',
+          children: {
+            enabled: { type: 'boolean', desc: '是否启用文件日志' },
+            dir: { type: 'string', desc: '日志目录，默认 ./logs' },
+            maxSize: { type: 'number', desc: '单个日志文件最大大小（MB），默认 300' },
+            rotateByMonth: { type: 'boolean', desc: '是否按月轮转，默认 true' },
+            logRequestBody: { type: 'boolean', desc: '是否记录请求体' },
+            logResponseBody: { type: 'boolean', desc: '是否记录响应体' }
+          }
+        }
+      }
+    },
+    metrics: {
+      type: 'object',
+      desc: '指标监控配置',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用指标监控' },
+        port: { type: 'number', desc: '指标服务端口，默认 11112' }
+      }
+    },
+    healthCheck: {
+      type: 'object',
+      desc: '健康检查配置',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用健康检查' },
+        port: { type: 'number', desc: '健康检查端口，默认 11112' }
+      }
+    },
+    server: {
+      type: 'object',
+      desc: '服务器配置',
+      children: {
+        transport: { type: 'string', desc: '传输模式：stdio/sse' },
+        ssePort: { type: 'number', desc: 'SSE 服务端口，默认 11113' },
+        httpPort: { type: 'number', desc: 'HTTP 服务端口，默认 11112' },
+        ssl: {
+          type: 'object',
+          desc: 'SSL 配置',
+          children: {
+            enabled: { type: 'boolean', desc: '是否启用 SSL' },
+            cert: { type: 'string', desc: 'SSL 证书路径' },
+            key: { type: 'string', desc: 'SSL 密钥路径' }
+          }
+        }
+      }
+    },
+    tokens: { type: 'object', desc: '令牌键值对映射，供工具引用' },
+    tools: {
+      type: 'object',
+      desc: '工具定义集合',
+      children: {
+        _toolItem: {
+          type: 'object',
+          desc: '单个工具配置',
+          children: {
+            description: { type: 'string', desc: '工具描述，供 LLM 理解用途' },
+            method: { type: 'string', desc: 'HTTP 方法：GET/POST/PUT/DELETE/PATCH' },
+            path: { type: 'string', desc: 'API 路径，支持 {param} 参数或完整 URL' },
+            token: { type: 'string', desc: '引用 tokens 键名，未指定时使用全局认证' },
+            authType: { type: 'string', desc: '认证类型：bearer/basic/apiKey' },
+            headers: { type: 'object', desc: '额外的 HTTP 请求头' },
+            timeout: { type: 'number', desc: '覆盖全局超时（ms）' },
+            requestTransform: { type: 'object', desc: '请求参数名映射' },
+            responseTransform: {
+              type: 'object',
+              desc: '响应转换配置',
+              children: {
+                pick: { type: 'array', desc: '提取的响应字段列表' },
+                rename: { type: 'object', desc: '字段名重命名映射' }
+              }
+            },
+            idempotencyKey: { type: 'string', desc: '幂等性键请求头名称' },
+            body: { type: 'object', desc: 'POST/PUT 请求体参数定义' },
+            queryParams: { type: 'object', desc: '查询字符串参数定义' },
+            mock: {
+              type: 'object',
+              desc: '工具级 Mock 配置',
+              children: {
+                enabled: { type: 'boolean', desc: '是否启用 Mock' },
+                response: { type: 'any', desc: '静态 Mock 响应数据' },
+                delay: { type: 'number', desc: '模拟延迟（ms）' },
+                statusCode: { type: 'number', desc: '模拟 HTTP 状态码' }
+              }
+            }
+          }
+        }
+      }
+    },
+    sqlite: {
+      type: 'object',
+      desc: 'SQLite 日志配置',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用 SQLite 日志，默认 true' },
+        dbPath: { type: 'string', desc: '数据库文件路径，默认 ./data/logs.db' },
+        maxDays: { type: 'number', desc: '最大保留天数，默认 30' },
+        batchSize: { type: 'number', desc: '批量写入大小，默认 100' },
+        syncInterval: { type: 'number', desc: '统计同步间隔（ms），默认 60000' }
+      }
+    },
+    compression: {
+      type: 'object',
+      desc: '响应压缩配置',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用压缩，默认 false' },
+        threshold: { type: 'number', desc: '最小压缩字节数，默认 1024' },
+        level: { type: 'number', desc: '压缩级别 1-9，默认 6' },
+        mimeTypes: { type: 'array', desc: '需压缩的 MIME 类型列表' }
+      }
+    },
+    hotReload: {
+      type: 'object',
+      desc: '热重载配置',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用热重载，默认 true' },
+        watchFile: { type: 'boolean', desc: '是否监听文件变更，默认 true' },
+        debounceMs: { type: 'number', desc: '防抖延迟（ms），默认 1000' }
+      }
+    },
+    backup: {
+      type: 'object',
+      desc: '备份配置',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用备份，默认 true' },
+        dir: { type: 'string', desc: '备份目录，默认 ./backups' },
+        maxVersions: { type: 'number', desc: '最大保留版本数，默认 10' },
+        schedule: { type: 'string', desc: 'Cron 定时表达式，默认每小时' }
+      }
+    },
+    alert: {
+      type: 'object',
+      desc: '告警配置',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用告警，默认 true' },
+        logDir: { type: 'string', desc: '告警日志目录，默认 ./logs' },
+        errorRateThreshold: { type: 'number', desc: '错误率阈值（%），默认 10' }
+      }
+    },
+    audit: {
+      type: 'object',
+      desc: '审计配置',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用审计，默认 true' },
+        maskSensitiveFields: { type: 'boolean', desc: '是否脱敏敏感字段，默认 true' }
+      }
+    },
+    mock: {
+      type: 'object',
+      desc: '全局 Mock 配置',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用全局 Mock' },
+        mockData: { type: 'object', desc: '各工具 Mock 数据配置' }
+      }
+    },
+    fallback: {
+      type: 'object',
+      desc: '降级配置（服务失败时的兜底策略）',
+      children: {
+        enabled: { type: 'boolean', desc: '是否启用降级，默认 true' },
+        useExpiredCache: { type: 'boolean', desc: '是否使用过期缓存兜底，默认 true' },
+        useMockAsFallback: { type: 'boolean', desc: '是否使用 Mock 兜底，默认 true' }
+      }
+    }
+  };
+
+  // 所有配置说明区域的展开状态
+  let configSectionsExpanded = {};
+
+  /**
+   * 渲染配置说明面板
+   *
+   * @author lvdaxianerplus
+   * @date 2026-04-20
+   */
+  function renderConfigReference() {
+    const container = document.getElementById('config-reference');
+    // 条件注释：容器不存在时跳过渲染
+    if (!container) {
+      return;
+    } else {
+      container.innerHTML = renderConfigSection(CONFIG_REFERENCE, 'config');
+    }
+  }
+
+  /**
+   * 渲染单个配置区域
+   *
+   * @param section - 配置区域数据
+   * @param path - 配置路径
+   * @returns HTML 字符串
+   * @author lvdaxianerplus
+   * @date 2026-04-20
+   */
+  function renderConfigSection(section, path) {
+    let html = '';
+    for (const key in section) {
+      const item = section[key];
+      const itemPath = path + '.' + key;
+      const hasChildren = item.children && Object.keys(item.children).length > 0;
+      const isExpanded = configSectionsExpanded[itemPath];
+      const icon = hasChildren ? (isExpanded ? '▼' : '▶') : '•';
+      const typeColor = item.type === 'string' ? '#3B82F6' :
+                        item.type === 'number' ? '#10B981' :
+                        item.type === 'boolean' ? '#F59E0B' :
+                        item.type === 'array' ? '#8B5CF6' :
+                        item.type === 'object' ? '#6B7280' : '#64748B';
+
+      html += '<div style="padding:8px 0;border-bottom:1px solid var(--border);">';
+      // 条件注释：有子节点时添加点击展开功能，无子节点时仅显示属性信息
+      if (hasChildren) {
+        html += '<div style="cursor:pointer;font-weight:500;display:flex;align-items:center;gap:8px;" onclick="toggleConfigSection(\'' + itemPath + '\')">';
+        html += '<span style="font-size:12px;color:var(--text-muted);">' + icon + '</span>';
+        html += '<span style="color:var(--primary);">' + key + '</span>';
+        html += '<span style="font-size:11px;background:' + typeColor + ';color:white;padding:2px 6px;border-radius:4px;">' + item.type + '</span>';
+        html += '</div>';
+        html += '<div style="font-size:13px;color:var(--text-muted);padding-left:24px;margin-top:4px;">' + item.desc + '</div>';
+        // 条件注释：展开时显示子节点，折叠时隐藏子节点
+        if (isExpanded) {
+          html += '<div style="padding-left:24px;margin-top:8px;border-left:2px solid var(--border);">' + renderConfigSection(item.children, itemPath) + '</div>';
+        }
+      } else {
+        html += '<div style="font-weight:500;display:flex;align-items:center;gap:8px;">';
+        html += '<span style="font-size:12px;color:var(--text-muted);">' + icon + '</span>';
+        html += '<span style="color:var(--primary);">' + key + '</span>';
+        html += '<span style="font-size:11px;background:' + typeColor + ';color:white;padding:2px 6px;border-radius:4px;">' + item.type + '</span>';
+        html += '</div>';
+        html += '<div style="font-size:13px;color:var(--text-muted);padding-left:24px;margin-top:4px;">' + item.desc + '</div>';
+      }
+      html += '</div>';
+    }
+    return html;
+  }
+
+  /**
+   * 切换配置区域展开状态
+   *
+   * @param path - 配置路径
+   * @author lvdaxianerplus
+   * @date 2026-04-20
+   */
+  function toggleConfigSection(path) {
+    // 条件注释：展开时切换为折叠，折叠时切换为展开
+    if (configSectionsExpanded[path]) {
+      configSectionsExpanded[path] = false;
+    } else {
+      configSectionsExpanded[path] = true;
+    }
+    renderConfigReference();
+  }
+
+  /**
+   * 切换所有配置区域的展开/折叠状态
+   *
+   * @author lvdaxianerplus
+   * @date 2026-04-20
+   */
+  function toggleAllConfigSections() {
+    // 条件注释：检查是否有展开的区域
+    const hasExpanded = Object.keys(configSectionsExpanded).some(k => configSectionsExpanded[k]);
+    // 条件注释：有展开区域时全部折叠，无展开区域时全部展开
+    if (hasExpanded) {
+      configSectionsExpanded = {};
+    } else {
+      // 遍历所有配置路径，设置为展开
+      function collectPaths(section, path) {
+        for (const key in section) {
+          const item = section[key];
+          const itemPath = path + '.' + key;
+          // 条件注释：有子节点时设置为展开状态
+          if (item.children && Object.keys(item.children).length > 0) {
+            configSectionsExpanded[itemPath] = true;
+            collectPaths(item.children, itemPath);
+          }
+        }
+      }
+      collectPaths(CONFIG_REFERENCE, 'config');
+    }
+    renderConfigReference();
+  }
+
+  // 初始化配置说明面板
+  renderConfigReference();
+</script>
