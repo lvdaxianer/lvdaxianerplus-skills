@@ -6,13 +6,21 @@
 
 - **MCP 协议支持** - 兼容 MCP 客户端，支持 STDIO 和 SSE 两种传输模式
 - **动态配置** - 通过 JSON 文件定义工具，无需修改代码
+- **配置热更新** - 支持文件监听和 API 触发配置重载，无需重启服务
+- **配置备份** - 自动备份配置文件，支持版本管理和恢复
 - **多种认证** - 支持 Bearer、Basic、API Key 三种认证方式
 - **请求重试** - 支持指数退避重试策略
 - **熔断器** - 防止故障扩散，保护后端服务
-- **响应缓存** - LRU 缓存，减少重复请求
+- **响应缓存** - LRU 缓存，支持按工具清除，减少重复请求
 - **请求/响应转换** - 参数名称映射、字段过滤
+- **完整 URL 支持** - 工具 path 可使用 `http://` 或 `https://` 开头的完整 URL
+- **SQLite 日志** - 请求/错误日志持久化，按天统计，Dashboard 从数据库查询
+- **审计日志** - 记录调用者身份、操作链，敏感参数自动脱敏
+- **告警日志** - 熔断/错误率监控，单独日志文件，支持告警解决标记
+- **Mock 工具** - 开发测试阶段模拟工具响应，支持模板插值和延迟模拟
 - **监控面板** - 可视化监控面板，展示调用统计、熔断状态、缓存命中率
 - **健康检查** - 提供 /health 端点检查服务状态
+- **优雅关闭** - 等待正在处理的请求完成后再退出
 
 ---
 
@@ -50,32 +58,6 @@ npm run build
 
 ---
 
-## NPM 发布配置
-
-如果你想将包发布到自己的私有 npm 仓库，修改 `package.json`：
-
-```json
-{
-  "name": "@your-org/mcp-http-gateway",
-  "version": "1.0.0",
-  "publishConfig": {
-    "registry": "https://your-private-npm-server.com"
-  }
-}
-```
-
-发布命令：
-
-```bash
-# 登录私有仓库
-npm login --registry=https://your-private-npm-server.com
-
-# 发布
-npm publish --registry=https://your-private-npm-server.com
-```
-
----
-
 ## 快速开始
 
 ### 1. 创建配置文件
@@ -93,35 +75,36 @@ npm publish --registry=https://your-private-npm-server.com
       "description": "根据ID获取用户信息",
       "method": "GET",
       "path": "/user/{userId}",
-      "body": {},
-      "queryParams": {}
+      "queryParams": {
+        "userId": {
+          "description": "用户ID",
+          "type": "string",
+          "required": true
+        }
+      }
     }
   }
 }
 ```
 
-### 2. 启动服务
-
-```bash
-mcp-http-gateway --config ./tools.json
-```
-
-### 3. 在 Claude Desktop 中配置
+### 2. 在 Claude Desktop 中配置
 
 修改 `~/.claude/settings.json`：
+
+**方式一：直接运行（需要先 build）**
 
 ```json
 {
   "mcpServers": {
     "http-gateway": {
-      "command": "mcp-http-gateway",
-      "args": ["--config", "/absolute/path/to/tools.json"]
+      "command": "node",
+      "args": ["<项目路径>/dist/cli.js", "--config", "<配置文件路径>/tools.json"]
     }
   }
 }
 ```
 
-或者使用 npx 方式（无需全局安装）：
+**方式二：npx 方式（无需全局安装）**
 
 ```json
 {
@@ -132,6 +115,40 @@ mcp-http-gateway --config ./tools.json
     }
   }
 }
+```
+
+**方式三：项目级配置 `.mcp.json`**
+
+在项目根目录创建 `.mcp.json`：
+
+```json
+{
+  "mcpServers": {
+    "http-gateway": {
+      "command": "node",
+      "args": ["./mcp/mcp-http-gateway/dist/cli.js", "--config", "./mcp/mcp-http-gateway/tools.json"]
+    }
+  }
+}
+```
+
+**说明**：Claude Desktop 会在需要时自动启动 MCP 服务，无需手动运行。npx 方式会自动下载包，适合不想全局安装的场景。
+
+### 3. 本地测试（可选）
+
+如果需要测试配置是否正确，可以手动启动：
+
+```bash
+cd mcp/mcp-http-gateway
+npm run build
+node dist/cli.js --config ./tools.json
+```
+
+或者启用 HTTP 监控面板进行调试：
+
+```bash
+node dist/cli.js --config ./tools.json --http
+# 访问 http://localhost:11112/dashboard
 ```
 
 ---
@@ -162,9 +179,22 @@ mcp-http-gateway --config ./tools.json --transport sse --sse-port 11113
 mcp-http-gateway --config ./tools.json --http --transport sse --sse-port 11113
 ```
 
+### 优雅关闭
+
+支持优雅关闭（Graceful Shutdown）：
+
+- **Ctrl+C (SIGINT)**：等待正在处理的请求完成
+- **SIGTERM**：同上
+
+关闭时会：
+1. 停止配置文件监听
+2. 刷新 SQLite 日志缓冲区
+3. 关闭数据库连接
+4. 关闭文件日志
+
 ---
 
-## 配置详解
+## 启动方式
 
 ### 完整配置示例 (tools.json)
 
@@ -217,7 +247,15 @@ mcp-http-gateway --config ./tools.json --http --transport sse --sse-port 11113
     "logRequest": true,
     "logResponse": true,
     "logHeaders": false,
-    "sensitiveHeaders": ["authorization", "x-api-key"]
+    "sensitiveHeaders": ["authorization", "x-api-key"],
+    "file": {
+      "enabled": true,
+      "dir": "./logs",
+      "maxSize": 300,
+      "rotateByMonth": true,
+      "logRequestBody": true,
+      "logResponseBody": true
+    }
   },
 
   "metrics": {
@@ -233,6 +271,36 @@ mcp-http-gateway --config ./tools.json --http --transport sse --sse-port 11113
   "tokens": {
     "A": "sk-token-aaa",
     "B": "sk-token-bbb"
+  },
+
+  // 新增：SQLite 日志
+  "sqlite": {
+    "enabled": true,
+    "dbPath": "./data/logs.db",
+    "maxDays": 30
+  },
+
+  // 新增：配置热更新
+  "hotReload": {
+    "enabled": true,
+    "watchFile": true
+  },
+
+  // 新增：配置备份
+  "backup": {
+    "enabled": true,
+    "dir": "./backups"
+  },
+
+  // 新增：告警配置
+  "alert": {
+    "enabled": true,
+    "errorRateThreshold": 10
+  },
+
+  // 新增：审计配置
+  "audit": {
+    "enabled": true
   },
 
   "tools": {
@@ -276,6 +344,13 @@ mcp-http-gateway --config ./tools.json --http --transport sse --sse-port 11113
 | `healthCheck` | object | ❌ | 健康检查配置 |
 | `tokens` | object | ❌ | Token 集合，key 为名称，value 为 token 值 |
 | `tools` | object | ✅ | 工具定义集合，key 为工具名 |
+| `sqlite` | object | ❌ | SQLite 日志配置 |
+| `mock` | object | ❌ | Mock 工具全局配置 |
+| `hotReload` | object | ❌ | 配置热更新配置 |
+| `backup` | object | ❌ | 配置备份配置 |
+| `alert` | object | ❌ | 告警日志配置 |
+| `audit` | object | ❌ | 审计日志配置 |
+| `compression` | object | ❌ | 响应压缩配置 |
 
 #### auth（认证配置）
 
@@ -329,6 +404,10 @@ mcp-http-gateway --config ./tools.json --http --transport sse --sse-port 11113
 
 #### logging（日志配置）
 
+> **说明**：日志系统有两种模式：
+> - **SQLite 日志**（默认开启）：结构化存储，支持 Dashboard 查询和统计分析
+> - **文件日志**（可选）：JSON Lines 格式，适合调试和日志归档
+
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `level` | string | "info" | 日志级别：`debug` / `info` / `warn` / `error` |
@@ -336,6 +415,18 @@ mcp-http-gateway --config ./tools.json --http --transport sse --sse-port 11113
 | `logResponse` | boolean | true | 是否记录响应 |
 | `logHeaders` | boolean | false | 是否记录请求头 |
 | `sensitiveHeaders` | string[] | ["authorization", "x-api-key"] | 日志中需要脱敏的 header 名称 |
+| `file` | object | 见下方 | 文件日志配置（可选） |
+
+**file 子配置（可选）**：
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `enabled` | boolean | false | 是否启用文件日志 |
+| `dir` | string | "./logs" | 日志文件目录 |
+| `maxSize` | number | 300 | 单文件最大大小（MB） |
+| `rotateByMonth` | boolean | true | 是否按月轮转 |
+| `logRequestBody` | boolean | true | 是否记录请求体 |
+| `logResponseBody` | boolean | true | 是否记录响应体 |
 
 #### metrics / healthCheck（指标和健康检查）
 
@@ -343,6 +434,63 @@ mcp-http-gateway --config ./tools.json --http --transport sse --sse-port 11113
 |------|------|--------|------|
 | `enabled` | boolean | false | 是否启用 |
 | `port` | number | 11112 | 服务端口 |
+
+#### sqlite（SQLite 日志配置）
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `enabled` | boolean | true | 是否启用 SQLite 日志（默认开启） |
+| `dbPath` | string | "./data/logs.db" | 数据库文件路径 |
+| `maxDays` | number | 30 | 日志保留天数 |
+| `batchSize` | number | 100 | 批量写入条数 |
+| `syncInterval` | number | 60000 | 统计同步间隔（毫秒） |
+
+#### mock（Mock 工具全局配置）
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `enabled` | boolean | false | 是否启用全局 Mock |
+| `mockData` | object | {} | 各工具的 Mock 数据配置 |
+
+#### hotReload（配置热更新配置）
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `enabled` | boolean | true | 是否启用热更新 |
+| `watchFile` | boolean | true | 是否监听文件变化 |
+| `debounceMs` | number | 1000 | 防抖延迟（毫秒） |
+
+#### backup（配置备份配置）
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `enabled` | boolean | true | 是否启用备份 |
+| `dir` | string | "./backups" | 备份目录 |
+| `maxVersions` | number | 10 | 最大保留版本数 |
+| `schedule` | string | "0 * * * *" | 定时备份 Cron 表达式 |
+
+#### alert（告警日志配置）
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `enabled` | boolean | true | 是否启用告警日志 |
+| `logDir` | string | "./logs" | 告警日志目录 |
+| `errorRateThreshold` | number | 10 | 错误率告警阈值（%） |
+
+#### audit（审计日志配置）
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `enabled` | boolean | true | 是否启用审计日志 |
+| `maskSensitiveFields` | boolean | true | 是否脱敏敏感字段 |
+
+#### compression（响应压缩配置）
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `enabled` | boolean | false | 是否启用响应压缩 |
+| `threshold` | number | 1024 | 最小压缩大小（字节） |
+| `level` | number | 6 | 压缩级别（1-9） |
 
 #### tokens（Token 集合）
 
@@ -362,7 +510,7 @@ mcp-http-gateway --config ./tools.json --http --transport sse --sse-port 11113
 |------|------|------|------|
 | `description` | string | ✅ | 工具描述，用于大模型理解工具用途 |
 | `method` | string | ✅ | HTTP 方法：`GET` / `POST` / `PUT` / `DELETE` / `PATCH` |
-| `path` | string | ✅ | API 路径，支持 `{param}` 作为路径参数占位符 |
+| `path` | string | ✅ | API 路径，支持 `{param}` 占位符，或完整 URL（`http://`/`https://`） |
 | `token` | string | ❌ | 引用的 token key（对应 tokens 中的 key） |
 | `authType` | string | ❌ | 认证类型：`bearer` / `basic` / `apiKey` |
 | `headers` | object | ❌ | 额外的 HTTP 请求头 |
@@ -373,6 +521,33 @@ mcp-http-gateway --config ./tools.json --http --transport sse --sse-port 11113
 | `responseTransform` | object | ❌ | 响应转换配置 |
 | `body` | object | ❌ | POST/PUT 请求体参数定义 |
 | `queryParams` | object | ❌ | 查询参数定义 |
+| `mock` | object | ❌ | Mock 配置（用于测试） |
+
+##### mock（工具 Mock 配置）
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `enabled` | boolean | false | 是否启用 Mock |
+| `response` | any | - | 静态返回数据 |
+| `responseTemplate` | string | - | 动态模板，支持 `{param}`、`{timestamp}`、`{uuid}`、`{random}` |
+| `delay` | number | 0 | 模拟延迟（毫秒） |
+| `statusCode` | number | 200 | 模拟状态码 |
+| `headers` | object | {} | 模拟响应头 |
+
+##### path（路径配置说明）
+
+- **相对路径**：拼接 baseUrl，如 `/user/{userId}`
+- **完整 URL**：不拼接 baseUrl，如 `https://external-api.com/data`
+
+```json
+{
+  "getUser": {
+    "path": "/user/{userId}"  // 相对路径 → baseUrl/user/{userId}
+  },
+  "callExternal": {
+    "path": "https://external-service.com/api/data"  // 完整 URL → 直接使用
+  }
+}
 
 ##### body / queryParams（参数定义）
 
@@ -536,6 +711,8 @@ services:
 
 ## API 端点
 
+### 基础端点
+
 | 端点 | 方法 | 说明 |
 |------|------|------|
 | `/health` | GET | 服务健康状态 |
@@ -544,6 +721,72 @@ services:
 | `/metrics` | GET | Prometheus 格式指标 |
 | `/dashboard` | GET | HTML 监控面板 |
 | `/api/dashboard` | GET | JSON 格式监控数据 |
+
+### 缓存管理 API
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/cache` | GET | 获取缓存统计（条目数、最大条目、TTL） |
+| `/api/cache` | DELETE | 清空所有缓存 |
+| `/api/cache/:toolName` | DELETE | 清除指定工具的缓存 |
+
+### 日志查询 API
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/logs` | GET | 查询请求日志（支持 `?date=` `?tool=` `?limit=`） |
+| `/api/errors` | GET | 查询错误日志（支持 `?date=` `?limit=`） |
+| `/api/stats` | GET | 查询统计（支持 `?startDate=` `?endDate=`） |
+| `/api/database/stats` | GET | 获取数据库统计 |
+
+### 告警管理 API
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/alerts` | GET | 查询告警日志（支持 `?date=` `?unresolved=true`） |
+| `/api/alerts/:id/resolve` | POST | 标记告警已解决 |
+
+### 审计查询 API
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/audit` | GET | 查询审计日志（支持 `?date=` `?session=` `?startDate=` `?endDate=`） |
+
+### 配置管理 API
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/config/backups` | GET | 列出所有备份版本 |
+| `/api/config/restore/:version` | POST | 恢复指定备份版本 |
+
+### Mock 管理 API
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/mock` | GET | 获取 Mock 配置状态 |
+| `/api/mock` | POST | 设置全局 Mock 开关（`{"enabled": true}`） |
+
+### API 使用示例
+
+```bash
+# 查询今日日志
+curl http://localhost:11112/api/logs?date=2026-04-19
+
+# 查询指定工具的日志
+curl http://localhost:11112/api/logs?tool=getUser
+
+# 清除 getUser 工具的缓存
+curl -X DELETE http://localhost:11112/api/cache/getUser
+
+# 获取未解决的告警
+curl http://localhost:11112/api/alerts?unresolved=true
+
+# 开启全局 Mock
+curl -X POST http://localhost:11112/api/mock -d '{"enabled": true}'
+
+# 查询审计报告
+curl "http://localhost:11112/api/audit?startDate=2026-04-01&endDate=2026-04-19"
+```
 
 ---
 
@@ -559,7 +802,7 @@ services:
 
 ---
 
-## 示例：完整工具配置
+## 示例：完整工具配置（含新功能）
 
 ```json
 {
@@ -568,6 +811,53 @@ services:
     "user-service": "sk-user-123",
     "order-service": "sk-order-456"
   },
+  
+  // SQLite 日志配置
+  "sqlite": {
+    "enabled": true,
+    "dbPath": "./data/logs.db",
+    "maxDays": 30,
+    "batchSize": 100
+  },
+  
+  // 配置热更新
+  "hotReload": {
+    "enabled": true,
+    "watchFile": true,
+    "debounceMs": 1000
+  },
+  
+  // 配置备份
+  "backup": {
+    "enabled": true,
+    "dir": "./backups",
+    "maxVersions": 10
+  },
+  
+  // 告警配置
+  "alert": {
+    "enabled": true,
+    "errorRateThreshold": 10
+  },
+  
+  // 审计配置
+  "audit": {
+    "enabled": true,
+    "maskSensitiveFields": true
+  },
+  
+  // Mock 配置
+  "mock": {
+    "enabled": false,
+    "mockData": {
+      "getUser": {
+        "enabled": true,
+        "response": { "id": "mock-123", "name": "Mock User" },
+        "delay": 100
+      }
+    }
+  },
+  
   "tools": {
     "addAge": {
       "description": "添加用户年龄信息",
@@ -592,6 +882,11 @@ services:
       "method": "GET",
       "path": "/user/{userId}",
       "token": "user-service",
+      // 工具级 Mock 配置
+      "mock": {
+        "enabled": false,
+        "response": { "id": "{userId}", "name": "Mock User" }
+      },
       "queryParams": {
         "includeDetail": {
           "description": "是否包含详细信息",
@@ -601,59 +896,30 @@ services:
         }
       }
     },
-    "queryUsers": {
-      "description": "根据条件查询用户列表",
+    // 使用完整 URL（不拼接 baseUrl）
+    "callExternalService": {
+      "description": "调用外部第三方服务",
       "method": "GET",
-      "path": "/users",
-      "token": "user-service",
-      "queryParams": {
-        "name": {
-          "description": "用户名（模糊匹配）",
-          "type": "string",
-          "required": false
-        },
-        "city": {
-          "description": "所在城市",
-          "type": "string",
-          "required": false
-        },
-        "page": {
-          "description": "页码",
-          "type": "number",
-          "required": false,
-          "default": 1
-        },
-        "pageSize": {
-          "description": "每页数量",
-          "type": "number",
-          "required": false,
-          "default": 10
-        }
+      "path": "https://external-api.com/v1/data",
+      "headers": {
+        "X-Api-Key": "external-service-token"
       }
     },
+    // 使用模板插值的 Mock
     "createOrder": {
-      "description": "创建订单",
+      "description": "创建订单（测试用 Mock）",
       "method": "POST",
       "path": "/order/create",
-      "token": "order-service",
-      "retry": {
+      "mock": {
         "enabled": true,
-        "maxAttempts": 3
+        "responseTemplate": "{\"orderId\": \"{uuid}", \"userId\": \"{userId}", \"status\": \"created\", \"timestamp\": \"{timestamp}\"}",
+        "statusCode": 201,
+        "delay": 50
       },
       "body": {
         "userId": {
           "description": "用户ID",
           "type": "string",
-          "required": true
-        },
-        "productId": {
-          "description": "商品ID",
-          "type": "string",
-          "required": true
-        },
-        "quantity": {
-          "description": "数量",
-          "type": "number",
           "required": true
         }
       }
@@ -662,7 +928,31 @@ services:
 }
 ```
 
----
+### Mock 执行机制
+
+> **重要说明**：Mock 启用后，**不会调用真实 HTTP 接口**，直接返回 Mock 数据。
+
+执行顺序：
+1. **Mock 检查**（第一位）→ 启用则返回 Mock 响应，短路退出
+2. **熔断器检查** → Mock 未启用才执行
+3. **缓存检查** → Mock 未启用才执行
+4. **真实 HTTP 请求** → Mock 未启用才执行
+
+**适用场景**：
+- 开发调试：无需真实后端服务
+- 测试验证：模拟各种响应场景
+- 性能测试：模拟延迟和错误
+
+### Mock 模板插值
+
+模板支持以下占位符：
+
+| 占位符 | 说明 | 示例 |
+|--------|------|------|
+| `{param}` | 替换为请求参数值 | `{userId}` → `"123"` |
+| `{timestamp}` | 当前 ISO 时间戳 | `"2026-04-19T10:30:00.000Z"` |
+| `{uuid}` | 生成 UUID | `"550e8400-e29b-41d4-a716-..."` |
+| `{random}` | 随机数 | `"8472"` |
 
 ## 许可证
 

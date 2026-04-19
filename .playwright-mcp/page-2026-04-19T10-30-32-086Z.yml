@@ -1,0 +1,522 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - heading "MCP Gateway" [level=1] [ref=e4]
+      - navigation [ref=e5]:
+        - button "总览" [ref=e6] [cursor=pointer]
+        - button "工具管理" [ref=e7] [cursor=pointer]
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - img [ref=e12]
+          - text: 总请求数
+        - generic [ref=e14]: "214"
+        - generic [ref=e15]: 累计调用次数
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - img [ref=e18]
+          - text: 成功率
+        - generic [ref=e20]: 2.3%
+        - generic [ref=e21]: 请求成功占比
+      - generic [ref=e22] [cursor=pointer]:
+        - generic [ref=e23]:
+          - img [ref=e24]
+          - text: 错误数
+        - generic [ref=e26]: "102"
+        - generic [ref=e27]: 失败请求（点击查看详情）
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - img [ref=e30]
+          - text: 平均延迟
+        - generic [ref=e32]: 2ms
+        - generic [ref=e33]: 响应时间
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - img [ref=e36]
+          - text: 熔断器状态
+        - table [ref=e39]:
+          - rowgroup [ref=e40]:
+            - row "工具 状态 失败 成功" [ref=e41]:
+              - columnheader "工具" [ref=e42]
+              - columnheader "状态" [ref=e43]
+              - columnheader "失败" [ref=e44]
+              - columnheader "成功" [ref=e45]
+          - rowgroup [ref=e46]:
+            - row "getUser CLOSED 0 0" [ref=e47]:
+              - cell "getUser" [ref=e48]
+              - cell "CLOSED" [ref=e49]
+              - cell "0" [ref=e50]
+              - cell "0" [ref=e51]
+            - row "addAge CLOSED 0 0" [ref=e52]:
+              - cell "addAge" [ref=e53]
+              - cell "CLOSED" [ref=e54]
+              - cell "0" [ref=e55]
+              - cell "0" [ref=e56]
+            - row "queryUser CLOSED 0 0" [ref=e57]:
+              - cell "queryUser" [ref=e58]
+              - cell "CLOSED" [ref=e59]
+              - cell "0" [ref=e60]
+              - cell "0" [ref=e61]
+            - row "testHealthCheck CLOSED 0 0" [ref=e62]:
+              - cell "testHealthCheck" [ref=e63]
+              - cell "CLOSED" [ref=e64]
+              - cell "0" [ref=e65]
+              - cell "0" [ref=e66]
+            - row "testDashboard CLOSED 0 0" [ref=e67]:
+              - cell "testDashboard" [ref=e68]
+              - cell "CLOSED" [ref=e69]
+              - cell "0" [ref=e70]
+              - cell "0" [ref=e71]
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - img [ref=e74]
+          - text: 缓存状态
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e78]: "0"
+            - generic [ref=e79]: 已缓存
+          - generic [ref=e81]:
+            - generic [ref=e82]: "1000"
+            - generic [ref=e83]: 最大容量
+      - generic [ref=e84]:
+        - generic [ref=e85]:
+          - img [ref=e86]
+          - text: 最近日志
+        - generic [ref=e88]:
+          - generic [ref=e89]:
+            - generic [ref=e90]: 6:30:00 PM
+            - generic [ref=e91]: File logging enabled
+          - generic [ref=e92]:
+            - generic [ref=e93]: 6:30:00 PM
+            - generic [ref=e94]: "[SQLite] Tables created successfully"
+          - generic [ref=e95]:
+            - generic [ref=e96]: 6:30:00 PM
+            - generic [ref=e97]: "[SQLite] Database initialized"
+          - generic [ref=e98]:
+            - generic [ref=e99]: 6:30:00 PM
+            - generic [ref=e100]: "[SQLite Logger] Initialized"
+          - generic [ref=e101]:
+            - generic [ref=e102]: 6:30:00 PM
+            - generic [ref=e103]: SQLite logging enabled
+          - generic [ref=e104]:
+            - generic [ref=e105]: 6:30:00 PM
+            - generic [ref=e106]: MCP HTTP Gateway starting...
+          - generic [ref=e107]:
+            - generic [ref=e108]: 6:30:00 PM
+            - generic [ref=e109]: Loaded 5 tools
+          - generic [ref=e110]:
+            - generic [ref=e111]: 6:30:00 PM
+            - generic [ref=e112]: Dashboard available at http://localhost:11112/dashboard
+          - generic [ref=e113]:
+            - generic [ref=e114]: 6:30:00 PM
+            - generic [ref=e115]: Health check available at http://localhost:11112/health
+          - generic [ref=e116]:
+            - generic [ref=e117]: 6:30:00 PM
+            - generic [ref=e118]: Starting MCP server with STDIO transport
+  - generic [ref=e120]:
+    - generic [ref=e121]:
+      - heading "错误详情" [level=3] [ref=e122]
+      - button [ref=e123] [cursor=pointer]:
+        - img [ref=e124]
+    - generic [ref=e126]:
+      - generic [ref=e127]:
+        - generic [ref=e128]:
+          - generic [ref=e129]: getUser
+          - generic [ref=e130]: 2026/4/19 18:12:20
+        - paragraph [ref=e131]: "HTTP 404 Response: 404"
+        - paragraph [ref=e132]: "| 耗时: 1ms"
+        - group [ref=e133]:
+          - generic "响应内容" [ref=e134] [cursor=pointer]
+      - generic [ref=e135]:
+        - generic [ref=e136]:
+          - generic [ref=e137]: getUser
+          - generic [ref=e138]: 2026/4/19 18:12:19
+        - paragraph [ref=e139]: "HTTP 404 Response: 404"
+        - paragraph [ref=e140]: "| 耗时: 1ms"
+        - group [ref=e141]:
+          - generic "响应内容" [ref=e142] [cursor=pointer]
+      - generic [ref=e143]:
+        - generic [ref=e144]:
+          - generic [ref=e145]: getUser
+          - generic [ref=e146]: 2026/4/19 18:12:19
+        - paragraph [ref=e147]: "HTTP 404 Response: 404"
+        - paragraph [ref=e148]: "| 耗时: 1ms"
+        - group [ref=e149]:
+          - generic "响应内容" [ref=e150] [cursor=pointer]
+      - generic [ref=e151]:
+        - generic [ref=e152]:
+          - generic [ref=e153]: getUser
+          - generic [ref=e154]: 2026/4/19 18:12:19
+        - paragraph [ref=e155]: "HTTP 404 Response: 404"
+        - paragraph [ref=e156]: "| 耗时: 1ms"
+        - group [ref=e157]:
+          - generic "响应内容" [ref=e158] [cursor=pointer]
+      - generic [ref=e159]:
+        - generic [ref=e160]:
+          - generic [ref=e161]: getUser
+          - generic [ref=e162]: 2026/4/19 18:12:19
+        - paragraph [ref=e163]: "HTTP 404 Response: 404"
+        - paragraph [ref=e164]: "| 耗时: 1ms"
+        - group [ref=e165]:
+          - generic "响应内容" [ref=e166] [cursor=pointer]
+      - generic [ref=e167]:
+        - generic [ref=e168]:
+          - generic [ref=e169]: queryUser
+          - generic [ref=e170]: 2026/4/19 18:12:19
+        - paragraph [ref=e171]: "HTTP 404 Response: 404"
+        - paragraph [ref=e172]: "| 耗时: 2ms"
+        - group [ref=e173]:
+          - generic "响应内容" [ref=e174] [cursor=pointer]
+      - generic [ref=e175]:
+        - generic [ref=e176]:
+          - generic [ref=e177]: addAge
+          - generic [ref=e178]: 2026/4/19 18:12:19
+        - paragraph [ref=e179]: "HTTP 404 Response: 404"
+        - paragraph [ref=e180]: "| 耗时: 2ms"
+        - group [ref=e181]:
+          - generic "响应内容" [ref=e182] [cursor=pointer]
+      - generic [ref=e183]:
+        - generic [ref=e184]:
+          - generic [ref=e185]: getUser
+          - generic [ref=e186]: 2026/4/19 18:12:19
+        - paragraph [ref=e187]: "HTTP 404 Response: 404"
+        - paragraph [ref=e188]: "| 耗时: 1ms"
+        - group [ref=e189]:
+          - generic "响应内容" [ref=e190] [cursor=pointer]
+      - generic [ref=e191]:
+        - generic [ref=e192]:
+          - generic [ref=e193]: getUser
+          - generic [ref=e194]: 2026/4/19 18:12:19
+        - paragraph [ref=e195]: "HTTP 404 Response: 404"
+        - paragraph [ref=e196]: "| 耗时: 1ms"
+        - group [ref=e197]:
+          - generic "响应内容" [ref=e198] [cursor=pointer]
+      - generic [ref=e199]:
+        - generic [ref=e200]:
+          - generic [ref=e201]: getUser
+          - generic [ref=e202]: 2026/4/19 18:12:19
+        - paragraph [ref=e203]: "HTTP 404 Response: 404"
+        - paragraph [ref=e204]: "| 耗时: 1ms"
+        - group [ref=e205]:
+          - generic "响应内容" [ref=e206] [cursor=pointer]
+      - generic [ref=e207]:
+        - generic [ref=e208]:
+          - generic [ref=e209]: getUser
+          - generic [ref=e210]: 2026/4/19 18:12:19
+        - paragraph [ref=e211]: "HTTP 404 Response: 404"
+        - paragraph [ref=e212]: "| 耗时: 2ms"
+        - group [ref=e213]:
+          - generic "响应内容" [ref=e214] [cursor=pointer]
+      - generic [ref=e215]:
+        - generic [ref=e216]:
+          - generic [ref=e217]: getUser
+          - generic [ref=e218]: 2026/4/19 18:12:18
+        - paragraph [ref=e219]: "HTTP 404 Response: 404"
+        - paragraph [ref=e220]: "| 耗时: 1ms"
+        - group [ref=e221]:
+          - generic "响应内容" [ref=e222] [cursor=pointer]
+      - generic [ref=e223]:
+        - generic [ref=e224]:
+          - generic [ref=e225]: getUser
+          - generic [ref=e226]: 2026/4/19 18:12:18
+        - paragraph [ref=e227]: "HTTP 404 Response: 404"
+        - paragraph [ref=e228]: "| 耗时: 2ms"
+        - group [ref=e229]:
+          - generic "响应内容" [ref=e230] [cursor=pointer]
+      - generic [ref=e231]:
+        - generic [ref=e232]:
+          - generic [ref=e233]: getUser
+          - generic [ref=e234]: 2026/4/19 18:12:18
+        - paragraph [ref=e235]: "HTTP 404 Response: 404"
+        - paragraph [ref=e236]: "| 耗时: 2ms"
+        - group [ref=e237]:
+          - generic "响应内容" [ref=e238] [cursor=pointer]
+      - generic [ref=e239]:
+        - generic [ref=e240]:
+          - generic [ref=e241]: getUser
+          - generic [ref=e242]: 2026/4/19 18:12:18
+        - paragraph [ref=e243]: "HTTP 404 Response: 404"
+        - paragraph [ref=e244]: "| 耗时: 2ms"
+        - group [ref=e245]:
+          - generic "响应内容" [ref=e246] [cursor=pointer]
+      - generic [ref=e247]:
+        - generic [ref=e248]:
+          - generic [ref=e249]: queryUser
+          - generic [ref=e250]: 2026/4/19 18:12:18
+        - paragraph [ref=e251]: "HTTP 404 Response: 404"
+        - paragraph [ref=e252]: "| 耗时: 2ms"
+        - group [ref=e253]:
+          - generic "响应内容" [ref=e254] [cursor=pointer]
+      - generic [ref=e255]:
+        - generic [ref=e256]:
+          - generic [ref=e257]: getUser
+          - generic [ref=e258]: 2026/4/19 18:12:18
+        - paragraph [ref=e259]: "HTTP 404 Response: 404"
+        - paragraph [ref=e260]: "| 耗时: 2ms"
+        - group [ref=e261]:
+          - generic "响应内容" [ref=e262] [cursor=pointer]
+      - generic [ref=e263]:
+        - generic [ref=e264]:
+          - generic [ref=e265]: getUser
+          - generic [ref=e266]: 2026/4/19 18:12:18
+        - paragraph [ref=e267]: "HTTP 404 Response: 404"
+        - paragraph [ref=e268]: "| 耗时: 2ms"
+        - group [ref=e269]:
+          - generic "响应内容" [ref=e270] [cursor=pointer]
+      - generic [ref=e271]:
+        - generic [ref=e272]:
+          - generic [ref=e273]: getUser
+          - generic [ref=e274]: 2026/4/19 18:12:18
+        - paragraph [ref=e275]: "HTTP 404 Response: 404"
+        - paragraph [ref=e276]: "| 耗时: 2ms"
+        - group [ref=e277]:
+          - generic "响应内容" [ref=e278] [cursor=pointer]
+      - generic [ref=e279]:
+        - generic [ref=e280]:
+          - generic [ref=e281]: getUser
+          - generic [ref=e282]: 2026/4/19 18:12:18
+        - paragraph [ref=e283]: "HTTP 404 Response: 404"
+        - paragraph [ref=e284]: "| 耗时: 2ms"
+        - group [ref=e285]:
+          - generic "响应内容" [ref=e286] [cursor=pointer]
+      - generic [ref=e287]:
+        - generic [ref=e288]:
+          - generic [ref=e289]: addAge
+          - generic [ref=e290]: 2026/4/19 18:12:17
+        - paragraph [ref=e291]: "HTTP 404 Response: 404"
+        - paragraph [ref=e292]: "| 耗时: 2ms"
+        - group [ref=e293]:
+          - generic "响应内容" [ref=e294] [cursor=pointer]
+      - generic [ref=e295]:
+        - generic [ref=e296]:
+          - generic [ref=e297]: getUser
+          - generic [ref=e298]: 2026/4/19 18:12:17
+        - paragraph [ref=e299]: "HTTP 404 Response: 404"
+        - paragraph [ref=e300]: "| 耗时: 1ms"
+        - group [ref=e301]:
+          - generic "响应内容" [ref=e302] [cursor=pointer]
+      - generic [ref=e303]:
+        - generic [ref=e304]:
+          - generic [ref=e305]: getUser
+          - generic [ref=e306]: 2026/4/19 18:12:17
+        - paragraph [ref=e307]: "HTTP 404 Response: 404"
+        - paragraph [ref=e308]: "| 耗时: 1ms"
+        - group [ref=e309]:
+          - generic "响应内容" [ref=e310] [cursor=pointer]
+      - generic [ref=e311]:
+        - generic [ref=e312]:
+          - generic [ref=e313]: getUser
+          - generic [ref=e314]: 2026/4/19 18:12:17
+        - paragraph [ref=e315]: "HTTP 404 Response: 404"
+        - paragraph [ref=e316]: "| 耗时: 2ms"
+        - group [ref=e317]:
+          - generic "响应内容" [ref=e318] [cursor=pointer]
+      - generic [ref=e319]:
+        - generic [ref=e320]:
+          - generic [ref=e321]: getUser
+          - generic [ref=e322]: 2026/4/19 18:12:17
+        - paragraph [ref=e323]: "HTTP 404 Response: 404"
+        - paragraph [ref=e324]: "| 耗时: 1ms"
+        - group [ref=e325]:
+          - generic "响应内容" [ref=e326] [cursor=pointer]
+      - generic [ref=e327]:
+        - generic [ref=e328]:
+          - generic [ref=e329]: getUser
+          - generic [ref=e330]: 2026/4/19 18:12:17
+        - paragraph [ref=e331]: "HTTP 404 Response: 404"
+        - paragraph [ref=e332]: "| 耗时: 2ms"
+        - group [ref=e333]:
+          - generic "响应内容" [ref=e334] [cursor=pointer]
+      - generic [ref=e335]:
+        - generic [ref=e336]:
+          - generic [ref=e337]: getUser
+          - generic [ref=e338]: 2026/4/19 18:12:17
+        - paragraph [ref=e339]: "HTTP 404 Response: 404"
+        - paragraph [ref=e340]: "| 耗时: 2ms"
+        - group [ref=e341]:
+          - generic "响应内容" [ref=e342] [cursor=pointer]
+      - generic [ref=e343]:
+        - generic [ref=e344]:
+          - generic [ref=e345]: getUser
+          - generic [ref=e346]: 2026/4/19 18:12:17
+        - paragraph [ref=e347]: "HTTP 404 Response: 404"
+        - paragraph [ref=e348]: "| 耗时: 1ms"
+        - group [ref=e349]:
+          - generic "响应内容" [ref=e350] [cursor=pointer]
+      - generic [ref=e351]:
+        - generic [ref=e352]:
+          - generic [ref=e353]: getUser
+          - generic [ref=e354]: 2026/4/19 18:12:17
+        - paragraph [ref=e355]: "HTTP 404 Response: 404"
+        - paragraph [ref=e356]: "| 耗时: 1ms"
+        - group [ref=e357]:
+          - generic "响应内容" [ref=e358] [cursor=pointer]
+      - generic [ref=e359]:
+        - generic [ref=e360]:
+          - generic [ref=e361]: getUser
+          - generic [ref=e362]: 2026/4/19 18:12:16
+        - paragraph [ref=e363]: "HTTP 404 Response: 404"
+        - paragraph [ref=e364]: "| 耗时: 1ms"
+        - group [ref=e365]:
+          - generic "响应内容" [ref=e366] [cursor=pointer]
+      - generic [ref=e367]:
+        - generic [ref=e368]:
+          - generic [ref=e369]: getUser
+          - generic [ref=e370]: 2026/4/19 18:12:16
+        - paragraph [ref=e371]: "HTTP 404 Response: 404"
+        - paragraph [ref=e372]: "| 耗时: 2ms"
+        - group [ref=e373]:
+          - generic "响应内容" [ref=e374] [cursor=pointer]
+      - generic [ref=e375]:
+        - generic [ref=e376]:
+          - generic [ref=e377]: getUser
+          - generic [ref=e378]: 2026/4/19 18:12:16
+        - paragraph [ref=e379]: "HTTP 404 Response: 404"
+        - paragraph [ref=e380]: "| 耗时: 1ms"
+        - group [ref=e381]:
+          - generic "响应内容" [ref=e382] [cursor=pointer]
+      - generic [ref=e383]:
+        - generic [ref=e384]:
+          - generic [ref=e385]: queryUser
+          - generic [ref=e386]: 2026/4/19 18:12:16
+        - paragraph [ref=e387]: "HTTP 404 Response: 404"
+        - paragraph
+        - group [ref=e388]:
+          - generic "响应内容" [ref=e389] [cursor=pointer]
+      - generic [ref=e390]:
+        - generic [ref=e391]:
+          - generic [ref=e392]: addAge
+          - generic [ref=e393]: 2026/4/19 18:12:16
+        - paragraph [ref=e394]: "HTTP 404 Response: 404"
+        - paragraph [ref=e395]: "| 耗时: 1ms"
+        - group [ref=e396]:
+          - generic "响应内容" [ref=e397] [cursor=pointer]
+      - generic [ref=e398]:
+        - generic [ref=e399]:
+          - generic [ref=e400]: getUser
+          - generic [ref=e401]: 2026/4/19 18:12:16
+        - paragraph [ref=e402]: "HTTP 404 Response: 404"
+        - paragraph [ref=e403]: "| 耗时: 1ms"
+        - group [ref=e404]:
+          - generic "响应内容" [ref=e405] [cursor=pointer]
+      - generic [ref=e406]:
+        - generic [ref=e407]:
+          - generic [ref=e408]: getUser
+          - generic [ref=e409]: 2026/4/19 18:12:16
+        - paragraph [ref=e410]: "HTTP 404 Response: 404"
+        - paragraph [ref=e411]: "| 耗时: 2ms"
+        - group [ref=e412]:
+          - generic "响应内容" [ref=e413] [cursor=pointer]
+      - generic [ref=e414]:
+        - generic [ref=e415]:
+          - generic [ref=e416]: getUser
+          - generic [ref=e417]: 2026/4/19 18:12:16
+        - paragraph [ref=e418]: "HTTP 404 Response: 404"
+        - paragraph [ref=e419]: "| 耗时: 2ms"
+        - group [ref=e420]:
+          - generic "响应内容" [ref=e421] [cursor=pointer]
+      - generic [ref=e422]:
+        - generic [ref=e423]:
+          - generic [ref=e424]: getUser
+          - generic [ref=e425]: 2026/4/19 18:12:15
+        - paragraph [ref=e426]: "HTTP 404 Response: 404"
+        - paragraph [ref=e427]: "| 耗时: 1ms"
+        - group [ref=e428]:
+          - generic "响应内容" [ref=e429] [cursor=pointer]
+      - generic [ref=e430]:
+        - generic [ref=e431]:
+          - generic [ref=e432]: getUser
+          - generic [ref=e433]: 2026/4/19 18:12:15
+        - paragraph [ref=e434]: "HTTP 404 Response: 404"
+        - paragraph
+        - group [ref=e435]:
+          - generic "响应内容" [ref=e436] [cursor=pointer]
+      - generic [ref=e437]:
+        - generic [ref=e438]:
+          - generic [ref=e439]: testDashboard
+          - generic [ref=e440]: 2026/4/19 18:12:15
+        - paragraph [ref=e441]: "HTTP 404 Response: 404"
+        - paragraph [ref=e442]: "| 耗时: 1ms"
+        - group [ref=e443]:
+          - generic "响应内容" [ref=e444] [cursor=pointer]
+      - generic [ref=e445]:
+        - generic [ref=e446]:
+          - generic [ref=e447]: getUser
+          - generic [ref=e448]: 2026/4/19 18:12:15
+        - paragraph [ref=e449]: "HTTP 404 Response: 404"
+        - paragraph [ref=e450]: "| 耗时: 1ms"
+        - group [ref=e451]:
+          - generic "响应内容" [ref=e452] [cursor=pointer]
+      - generic [ref=e453]:
+        - generic [ref=e454]:
+          - generic [ref=e455]: getUser
+          - generic [ref=e456]: 2026/4/19 18:12:15
+        - paragraph [ref=e457]: "HTTP 404 Response: 404"
+        - paragraph [ref=e458]: "| 耗时: 1ms"
+        - group [ref=e459]:
+          - generic "响应内容" [ref=e460] [cursor=pointer]
+      - generic [ref=e461]:
+        - generic [ref=e462]:
+          - generic [ref=e463]: getUser
+          - generic [ref=e464]: 2026/4/19 18:12:15
+        - paragraph [ref=e465]: "HTTP 404 Response: 404"
+        - paragraph [ref=e466]: "| 耗时: 2ms"
+        - group [ref=e467]:
+          - generic "响应内容" [ref=e468] [cursor=pointer]
+      - generic [ref=e469]:
+        - generic [ref=e470]:
+          - generic [ref=e471]: queryUser
+          - generic [ref=e472]: 2026/4/19 18:12:15
+        - paragraph [ref=e473]: "HTTP 404 Response: 404"
+        - paragraph [ref=e474]: "| 耗时: 1ms"
+        - group [ref=e475]:
+          - generic "响应内容" [ref=e476] [cursor=pointer]
+      - generic [ref=e477]:
+        - generic [ref=e478]:
+          - generic [ref=e479]: addAge
+          - generic [ref=e480]: 2026/4/19 18:12:15
+        - paragraph [ref=e481]: "HTTP 404 Response: 404"
+        - paragraph [ref=e482]: "| 耗时: 2ms"
+        - group [ref=e483]:
+          - generic "响应内容" [ref=e484] [cursor=pointer]
+      - generic [ref=e485]:
+        - generic [ref=e486]:
+          - generic [ref=e487]: getUser
+          - generic [ref=e488]: 2026/4/19 18:12:15
+        - paragraph [ref=e489]: "HTTP 404 Response: 404"
+        - paragraph [ref=e490]: "| 耗时: 2ms"
+        - group [ref=e491]:
+          - generic "响应内容" [ref=e492] [cursor=pointer]
+      - generic [ref=e493]:
+        - generic [ref=e494]:
+          - generic [ref=e495]: getUser
+          - generic [ref=e496]: 2026/4/19 18:12:14
+        - paragraph [ref=e497]: "HTTP 404 Response: 404"
+        - paragraph [ref=e498]: "| 耗时: 1ms"
+        - group [ref=e499]:
+          - generic "响应内容" [ref=e500] [cursor=pointer]
+      - generic [ref=e501]:
+        - generic [ref=e502]:
+          - generic [ref=e503]: getUser
+          - generic [ref=e504]: 2026/4/19 18:12:14
+        - paragraph [ref=e505]: "HTTP 404 Response: 404"
+        - paragraph [ref=e506]: "| 耗时: 1ms"
+        - group [ref=e507]:
+          - generic "响应内容" [ref=e508] [cursor=pointer]
+      - generic [ref=e509]:
+        - generic [ref=e510]:
+          - generic [ref=e511]: getUser
+          - generic [ref=e512]: 2026/4/19 18:12:14
+        - paragraph [ref=e513]: "HTTP 404 Response: 404"
+        - paragraph [ref=e514]: "| 耗时: 1ms"
+        - group [ref=e515]:
+          - generic "响应内容" [ref=e516] [cursor=pointer]
+      - generic [ref=e517]:
+        - generic [ref=e518]:
+          - generic [ref=e519]: getUser
+          - generic [ref=e520]: 2026/4/19 18:12:14
+        - paragraph [ref=e521]: "HTTP 404 Response: 404"
+        - paragraph [ref=e522]: "| 耗时: 1ms"
+        - group [ref=e523]:
+          - generic "响应内容" [ref=e524] [cursor=pointer]
+    - button "关闭" [ref=e526] [cursor=pointer]

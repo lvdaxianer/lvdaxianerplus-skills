@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
+- 添加 MCP HTTP Gateway 服务 (678299f)
+
+### Changed
+- 增强代码审查规范 (6ec63ee)
+
 - 将浏览器测试改为可选，移除强制要求 (6eadabe)
 
 ### Changed

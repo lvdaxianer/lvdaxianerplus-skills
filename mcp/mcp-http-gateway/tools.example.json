@@ -1,0 +1,41 @@
+{
+  "baseUrl": "https://your-api.com",
+  "tokens": {
+    "default": "your-api-token-here"
+  },
+  "logging": {
+    "level": "info",
+    "file": {
+      "enabled": true,
+      "dir": "./logs",
+      "maxSize": 300,
+      "rotateByMonth": true,
+      "logRequestBody": true,
+      "logResponseBody": true,
+      "logRequestHeaders": true,
+      "logResponseHeaders": true
+    }
+  },
+  "metrics": {
+    "enabled": true,
+    "port": 11112
+  },
+  "healthCheck": {
+    "enabled": true,
+    "port": 11112
+  },
+  "tools": {
+    "getUser": {
+      "description": "根据ID获取用户信息",
+      "method": "GET",
+      "path": "/user/{userId}",
+      "queryParams": {
+        "userId": {
+          "description": "用户ID",
+          "type": "string",
+          "required": true
+        }
+      }
+    }
+  }
+}

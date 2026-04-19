@@ -1,0 +1,114 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - heading "MCP Gateway" [level=1] [ref=e4]
+    - navigation [ref=e5]:
+      - button "总览" [ref=e6] [cursor=pointer]
+      - button "工具管理" [ref=e7] [cursor=pointer]
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - img [ref=e12]
+        - text: 总请求数
+      - generic [ref=e14]: "214"
+      - generic [ref=e15]: 累计调用次数
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - img [ref=e18]
+        - text: 成功率
+      - generic [ref=e20]: 2.3%
+      - generic [ref=e21]: 请求成功占比
+    - generic [ref=e22] [cursor=pointer]:
+      - generic [ref=e23]:
+        - img [ref=e24]
+        - text: 错误数
+      - generic [ref=e26]: "102"
+      - generic [ref=e27]: 失败请求（点击查看详情）
+    - generic [ref=e28]:
+      - generic [ref=e29]:
+        - img [ref=e30]
+        - text: 平均延迟
+      - generic [ref=e32]: 2ms
+      - generic [ref=e33]: 响应时间
+    - generic [ref=e34]:
+      - generic [ref=e35]:
+        - img [ref=e36]
+        - text: 熔断器状态
+      - table [ref=e39]:
+        - rowgroup [ref=e40]:
+          - row "工具 状态 失败 成功" [ref=e41]:
+            - columnheader "工具" [ref=e42]
+            - columnheader "状态" [ref=e43]
+            - columnheader "失败" [ref=e44]
+            - columnheader "成功" [ref=e45]
+        - rowgroup [ref=e46]:
+          - row "getUser CLOSED 0 0" [ref=e47]:
+            - cell "getUser" [ref=e48]
+            - cell "CLOSED" [ref=e49]
+            - cell "0" [ref=e50]
+            - cell "0" [ref=e51]
+          - row "addAge CLOSED 0 0" [ref=e52]:
+            - cell "addAge" [ref=e53]
+            - cell "CLOSED" [ref=e54]
+            - cell "0" [ref=e55]
+            - cell "0" [ref=e56]
+          - row "queryUser CLOSED 0 0" [ref=e57]:
+            - cell "queryUser" [ref=e58]
+            - cell "CLOSED" [ref=e59]
+            - cell "0" [ref=e60]
+            - cell "0" [ref=e61]
+          - row "testHealthCheck CLOSED 0 0" [ref=e62]:
+            - cell "testHealthCheck" [ref=e63]
+            - cell "CLOSED" [ref=e64]
+            - cell "0" [ref=e65]
+            - cell "0" [ref=e66]
+          - row "testDashboard CLOSED 0 0" [ref=e67]:
+            - cell "testDashboard" [ref=e68]
+            - cell "CLOSED" [ref=e69]
+            - cell "0" [ref=e70]
+            - cell "0" [ref=e71]
+    - generic [ref=e72] [cursor=pointer]:
+      - generic [ref=e73]:
+        - img [ref=e74]
+        - text: 缓存状态（点击查看详情）
+      - generic [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]: "0"
+          - generic [ref=e79]: 已缓存
+        - generic [ref=e81]:
+          - generic [ref=e82]: "1000"
+          - generic [ref=e83]: 最大容量
+    - generic [ref=e84]:
+      - generic [ref=e85]:
+        - img [ref=e86]
+        - text: 最近日志
+      - generic [ref=e88]:
+        - generic [ref=e89]:
+          - generic [ref=e90]: 6:36:14 PM
+          - generic [ref=e91]: File logging enabled
+        - generic [ref=e92]:
+          - generic [ref=e93]: 6:36:14 PM
+          - generic [ref=e94]: "[SQLite] Tables created successfully"
+        - generic [ref=e95]:
+          - generic [ref=e96]: 6:36:14 PM
+          - generic [ref=e97]: "[SQLite] Database initialized"
+        - generic [ref=e98]:
+          - generic [ref=e99]: 6:36:14 PM
+          - generic [ref=e100]: "[SQLite Logger] Initialized"
+        - generic [ref=e101]:
+          - generic [ref=e102]: 6:36:14 PM
+          - generic [ref=e103]: SQLite logging enabled
+        - generic [ref=e104]:
+          - generic [ref=e105]: 6:36:14 PM
+          - generic [ref=e106]: MCP HTTP Gateway starting...
+        - generic [ref=e107]:
+          - generic [ref=e108]: 6:36:14 PM
+          - generic [ref=e109]: Loaded 5 tools
+        - generic [ref=e110]:
+          - generic [ref=e111]: 6:36:14 PM
+          - generic [ref=e112]: Dashboard available at http://localhost:11112/dashboard
+        - generic [ref=e113]:
+          - generic [ref=e114]: 6:36:14 PM
+          - generic [ref=e115]: Health check available at http://localhost:11112/health
+        - generic [ref=e116]:
+          - generic [ref=e117]: 6:36:14 PM
+          - generic [ref=e118]: Starting MCP server with STDIO transport

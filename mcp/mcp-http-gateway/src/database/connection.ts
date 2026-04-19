@@ -1,0 +1,332 @@
+/**
+ * SQLite database connection manager
+ *
+ * Features:
+ * - WAL mode for concurrent read/write
+ * - Automatic table creation
+ * - Connection pooling support
+ * - Graceful shutdown
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-19
+ */
+
+import Database from 'better-sqlite3';
+import type { SQLiteLoggingConfig, BackupConfig } from '../config/types.js';
+import { logger } from '../middleware/logger.js';
+
+let db: Database.Database | null = null;
+let dbPath: string = './data/logs.db';
+
+/**
+ * Initialize SQLite database connection
+ *
+ * @param config - SQLite logging configuration
+ * @returns Database instance
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-19
+ */
+export function initDatabase(config: SQLiteLoggingConfig): Database.Database {
+  // Set database path from config or use default
+  dbPath = config.dbPath ?? './data/logs.db';
+
+  // Ensure data directory exists
+  const dataDir = dbPath.split('/').slice(0, -1).join('/');
+  if (dataDir) {
+    import('fs').then(fs => {
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+    });
+  }
+
+  // Create or open database
+  db = new Database(dbPath);
+
+  // Enable WAL mode for better concurrent performance
+  db.pragma('journal_mode = WAL');
+
+  // Create tables if not exist
+  createTables(db);
+
+  logger.info('[SQLite] Database initialized', { path: dbPath, mode: 'WAL' });
+
+  return db;
+}
+
+/**
+ * Create all required tables
+ *
+ * @param db - Database instance
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-19
+ */
+function createTables(db: Database.Database): void {
+  // Request logs table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS request_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp TEXT NOT NULL,
+      date_key TEXT NOT NULL,
+      level TEXT NOT NULL DEFAULT 'info',
+      tool_name TEXT NOT NULL,
+      message TEXT NOT NULL,
+      method TEXT,
+      url TEXT,
+      request_headers TEXT,
+      request_body TEXT,
+      response_status INTEGER,
+      response_headers TEXT,
+      response_body TEXT,
+      duration INTEGER,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_request_logs_date ON request_logs(date_key);
+    CREATE INDEX IF NOT EXISTS idx_request_logs_tool ON request_logs(tool_name);
+    CREATE INDEX IF NOT EXISTS idx_request_logs_level ON request_logs(level);
+  `);
+
+  // Error logs table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS error_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp TEXT NOT NULL,
+      date_key TEXT NOT NULL,
+      level TEXT NOT NULL DEFAULT 'error',
+      tool_name TEXT NOT NULL,
+      message TEXT NOT NULL,
+      error_type TEXT,
+      error_stack TEXT,
+      request_method TEXT,
+      request_url TEXT,
+      request_headers TEXT,
+      request_body TEXT,
+      duration INTEGER,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_error_logs_date ON error_logs(date_key);
+    CREATE INDEX IF NOT EXISTS idx_error_logs_tool ON error_logs(tool_name);
+  `);
+
+  // Daily stats table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS daily_stats (
+      date_key TEXT PRIMARY KEY,
+      total_requests INTEGER DEFAULT 0,
+      total_successes INTEGER DEFAULT 0,
+      total_errors INTEGER DEFAULT 0,
+      avg_duration REAL DEFAULT 0,
+      tool_stats TEXT,
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
+  // Audit logs table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp TEXT NOT NULL,
+      date_key TEXT NOT NULL,
+      session_id TEXT,
+      client_info TEXT,
+      tool_name TEXT NOT NULL,
+      action TEXT NOT NULL,
+      arguments TEXT,
+      result_status TEXT,
+      duration INTEGER,
+      ip_address TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_date ON audit_logs(date_key);
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_tool ON audit_logs(tool_name);
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_session ON audit_logs(session_id);
+  `);
+
+  // Alert logs table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS alert_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp TEXT NOT NULL,
+      date_key TEXT NOT NULL,
+      alert_type TEXT NOT NULL,
+      severity TEXT NOT NULL,
+      tool_name TEXT,
+      message TEXT NOT NULL,
+      details TEXT,
+      resolved_at TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_alert_logs_date ON alert_logs(date_key);
+    CREATE INDEX IF NOT EXISTS idx_alert_logs_type ON alert_logs(alert_type);
+    CREATE INDEX IF NOT EXISTS idx_alert_logs_severity ON alert_logs(severity);
+  `);
+
+  logger.info('[SQLite] Tables created successfully');
+}
+
+/**
+ * Get database instance
+ *
+ * @returns Database instance or null if not initialized
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-19
+ */
+export function getDatabase(): Database.Database | null {
+  return db;
+}
+
+/**
+ * Get current database path
+ *
+ * @returns Database file path
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-19
+ */
+export function getDatabasePath(): string {
+  return dbPath;
+}
+
+/**
+ * Close database connection gracefully
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-19
+ */
+export function closeDatabase(): void {
+  if (db) {
+    db.close();
+    db = null;
+    logger.info('[SQLite] Database connection closed');
+  }
+}
+
+/**
+ * Clean old records based on retention policy
+ *
+ * @param maxDays - Maximum days to keep records
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-19
+ */
+export function cleanOldRecords(maxDays: number): void {
+  if (!db) {
+    return;
+  }
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - maxDays);
+  const cutoffDateKey = cutoffDate.toISOString().split('T')[0];
+
+  // Delete old request logs
+  const deletedRequestLogs = db.prepare(
+    'DELETE FROM request_logs WHERE date_key < ?'
+  ).run(cutoffDateKey);
+
+  // Delete old error logs
+  const deletedErrorLogs = db.prepare(
+    'DELETE FROM error_logs WHERE date_key < ?'
+  ).run(cutoffDateKey);
+
+  // Delete old audit logs
+  const deletedAuditLogs = db.prepare(
+    'DELETE FROM audit_logs WHERE date_key < ?'
+  ).run(cutoffDateKey);
+
+  // Delete old alert logs (keep resolved alerts longer)
+  const deletedAlertLogs = db.prepare(
+    'DELETE FROM alert_logs WHERE date_key < ? AND resolved_at IS NOT NULL'
+  ).run(cutoffDateKey);
+
+  // Delete old daily stats
+  const deletedStats = db.prepare(
+    'DELETE FROM daily_stats WHERE date_key < ?'
+  ).run(cutoffDateKey);
+
+  // Execute VACUUM to reclaim space
+  db.exec('VACUUM');
+
+  logger.info('[SQLite] Cleaned old records', {
+    maxDays,
+    cutoffDate: cutoffDateKey,
+    requestLogs: deletedRequestLogs.changes,
+    errorLogs: deletedErrorLogs.changes,
+    auditLogs: deletedAuditLogs.changes,
+    alertLogs: deletedAlertLogs.changes,
+    stats: deletedStats.changes,
+  });
+}
+
+/**
+ * Backup database file
+ *
+ * @param backupPath - Backup file path
+ * @returns Backup success status
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-19
+ */
+export function backupDatabase(backupPath: string): boolean {
+  if (!db) {
+    return false;
+  }
+
+  try {
+    db.backup(backupPath);
+    logger.info('[SQLite] Database backed up', { backupPath });
+    return true;
+  } catch (error) {
+    logger.error('[SQLite] Backup failed', { error, backupPath });
+    return false;
+  }
+}
+
+/**
+ * Get database statistics
+ *
+ * @returns Database size and record counts
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-19
+ */
+export function getDatabaseStats(): {
+  path: string;
+  requestLogs: number;
+  errorLogs: number;
+  auditLogs: number;
+  alertLogs: number;
+  dailyStats: number;
+} {
+  if (!db) {
+    return {
+      path: dbPath,
+      requestLogs: 0,
+      errorLogs: 0,
+      auditLogs: 0,
+      alertLogs: 0,
+      dailyStats: 0,
+    };
+  }
+
+  const requestLogs = db.prepare('SELECT COUNT(*) as count FROM request_logs').get() as { count: number };
+  const errorLogs = db.prepare('SELECT COUNT(*) as count FROM error_logs').get() as { count: number };
+  const auditLogs = db.prepare('SELECT COUNT(*) as count FROM audit_logs').get() as { count: number };
+  const alertLogs = db.prepare('SELECT COUNT(*) as count FROM alert_logs').get() as { count: number };
+  const dailyStats = db.prepare('SELECT COUNT(*) as count FROM daily_stats').get() as { count: number };
+
+  return {
+    path: dbPath,
+    requestLogs: requestLogs.count,
+    errorLogs: errorLogs.count,
+    auditLogs: auditLogs.count,
+    alertLogs: alertLogs.count,
+    dailyStats: dailyStats.count,
+  };
+}

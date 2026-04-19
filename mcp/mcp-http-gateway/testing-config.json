@@ -1,0 +1,219 @@
+{
+  "baseUrl": "http://localhost:11112",
+  "tokens": {
+    "default": "test-token-12345",
+    "A": "sk-token-aaa",
+    "B": "sk-token-bbb"
+  },
+  "timeout": {
+    "connect": 5000,
+    "read": 10000,
+    "write": 10000
+  },
+  "retry": {
+    "enabled": true,
+    "maxAttempts": 3,
+    "delay": 1000,
+    "backoff": 2.0,
+    "retryOn": [429, 500, 502, 503, 504]
+  },
+  "circuitBreaker": {
+    "enabled": true,
+    "failureThreshold": 5,
+    "successThreshold": 2,
+    "halfOpenTime": 30000
+  },
+  "cache": {
+    "enabled": true,
+    "ttl": 60000,
+    "maxSize": 1000
+  },
+  "fallback": {
+    "enabled": true,
+    "useExpiredCache": true,
+    "useMockAsFallback": true
+  },
+  "mock": {
+    "enabled": true,
+    "globalMockMode": true,
+    "data": {
+      "getUser": {
+        "id": "user-001",
+        "name": "测试用户",
+        "email": "test@example.com",
+        "age": 25,
+        "status": "active"
+      },
+      "addAge": {
+        "success": true,
+        "message": "年龄更新成功"
+      },
+      "queryUser": {
+        "users": [
+          {
+            "id": "user-001",
+            "name": "张三",
+            "city": "北京"
+          },
+          {
+            "id": "user-002",
+            "name": "李四",
+            "city": "上海"
+          }
+        ],
+        "total": 2
+      }
+    }
+  },
+  "sqlite": {
+    "enabled": true,
+    "dbPath": "./data/mcp-gateway.db",
+    "maxDays": 30
+  },
+  "alert": {
+    "logDir": "./logs"
+  },
+  "logging": {
+    "level": "info",
+    "logRequest": true,
+    "logResponse": true,
+    "logHeaders": false,
+    "sensitiveHeaders": ["authorization", "x-api-key"],
+    "file": {
+      "enabled": true,
+      "logDir": "./logs",
+      "maxFileSize": 10485760,
+      "maxFiles": 5
+    }
+  },
+  "metrics": {
+    "enabled": true,
+    "port": 11112
+  },
+  "healthCheck": {
+    "enabled": true,
+    "port": 11112
+  },
+  "hotReload": {
+    "enabled": true,
+    "debounceMs": 1000
+  },
+  "server": {
+    "transport": "stdio",
+    "ssePort": 11113,
+    "httpPort": 11112
+  },
+  "tools": {
+    "getUser": {
+      "description": "根据ID获取用户信息",
+      "method": "GET",
+      "path": "/api/user/{userId}",
+      "token": "A",
+      "mock": {
+        "enabled": true,
+        "response": {
+          "id": "user-mock-001",
+          "name": "Mock用户",
+          "email": "mock@example.com",
+          "age": 30,
+          "status": "active"
+        }
+      },
+      "queryParams": {
+        "includeDetail": {
+          "description": "是否包含详细信息",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        }
+      }
+    },
+    "addAge": {
+      "description": "添加用户年龄",
+      "method": "POST",
+      "path": "/api/user/age",
+      "token": "A",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "mock": {
+        "enabled": true,
+        "response": {
+          "success": true,
+          "message": "年龄更新成功",
+          "userId": "mock-user",
+          "newAge": 30
+        }
+      },
+      "body": {
+        "userId": {
+          "description": "用户ID",
+          "type": "string",
+          "required": true
+        },
+        "age": {
+          "description": "年龄（0-150）",
+          "type": "number",
+          "required": true
+        }
+      }
+    },
+    "queryUser": {
+      "description": "根据用户名查询用户",
+      "method": "GET",
+      "path": "/api/user",
+      "token": "B",
+      "mock": {
+        "enabled": true,
+        "response": {
+          "users": [
+            {
+              "id": "user-001",
+              "name": "张三",
+              "city": "北京"
+            },
+            {
+              "id": "user-002",
+              "name": "李四",
+              "city": "上海"
+            }
+          ],
+          "total": 2
+        }
+      },
+      "queryParams": {
+        "name": {
+          "description": "用户名",
+          "type": "string",
+          "required": true
+        },
+        "city": {
+          "description": "所在城市",
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    "testHealthCheck": {
+      "description": "测试健康检查",
+      "method": "GET",
+      "path": "/health",
+      "token": "default"
+    },
+    "testDashboard": {
+      "description": "测试Dashboard接口",
+      "method": "GET",
+      "path": "/api/dashboard/stats",
+      "token": "default",
+      "mock": {
+        "enabled": true,
+        "response": {
+          "totalRequests": 100,
+          "successRate": 95.5,
+          "errorCount": 5,
+          "avgLatency": 10
+        }
+      }
+    }
+  }
+}

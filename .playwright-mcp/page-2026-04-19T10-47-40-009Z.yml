@@ -1,0 +1,135 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - heading "MCP Gateway" [level=1] [ref=e4]
+    - navigation [ref=e5]:
+      - button "总览" [ref=e6] [cursor=pointer]
+      - button "工具管理" [ref=e7] [cursor=pointer]
+    - generic [ref=e8]:
+      - combobox [ref=e9]:
+        - option "5秒"
+        - option "10秒" [selected]
+        - option "15秒"
+        - option "30秒"
+        - option "60秒"
+        - option "关闭自动刷新"
+      - button "刷新" [ref=e10] [cursor=pointer]:
+        - img [ref=e11]
+        - text: 刷新
+  - generic [ref=e14]:
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - img [ref=e17]
+        - text: 总请求数
+      - generic [ref=e19]: "214"
+      - generic [ref=e20]: 累计调用次数
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - img [ref=e23]
+        - text: 成功率
+      - generic [ref=e25]: 2.3%
+      - generic [ref=e26]: 请求成功占比
+    - generic [ref=e27] [cursor=pointer]:
+      - generic [ref=e28]:
+        - img [ref=e29]
+        - text: 错误数
+      - generic [ref=e31]: "102"
+      - generic [ref=e32]: 失败请求（点击查看详情）
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - img [ref=e35]
+        - text: 平均延迟
+      - generic [ref=e37]: 2ms
+      - generic [ref=e38]: 响应时间
+    - generic [ref=e39]:
+      - generic [ref=e40]:
+        - img [ref=e41]
+        - text: 熔断器状态
+      - table [ref=e44]:
+        - rowgroup [ref=e45]:
+          - row "工具 状态 失败 成功" [ref=e46]:
+            - columnheader "工具" [ref=e47]
+            - columnheader "状态" [ref=e48]
+            - columnheader "失败" [ref=e49]
+            - columnheader "成功" [ref=e50]
+        - rowgroup [ref=e51]:
+          - row "getUser CLOSED 0 0" [ref=e52]:
+            - cell "getUser" [ref=e53]
+            - cell "CLOSED" [ref=e54]
+            - cell "0" [ref=e55]
+            - cell "0" [ref=e56]
+          - row "addAge CLOSED 0 0" [ref=e57]:
+            - cell "addAge" [ref=e58]
+            - cell "CLOSED" [ref=e59]
+            - cell "0" [ref=e60]
+            - cell "0" [ref=e61]
+          - row "queryUser CLOSED 0 0" [ref=e62]:
+            - cell "queryUser" [ref=e63]
+            - cell "CLOSED" [ref=e64]
+            - cell "0" [ref=e65]
+            - cell "0" [ref=e66]
+          - row "testHealthCheck CLOSED 0 0" [ref=e67]:
+            - cell "testHealthCheck" [ref=e68]
+            - cell "CLOSED" [ref=e69]
+            - cell "0" [ref=e70]
+            - cell "0" [ref=e71]
+          - row "testDashboard CLOSED 0 0" [ref=e72]:
+            - cell "testDashboard" [ref=e73]
+            - cell "CLOSED" [ref=e74]
+            - cell "0" [ref=e75]
+            - cell "0" [ref=e76]
+    - generic [ref=e77] [cursor=pointer]:
+      - generic [ref=e78]:
+        - img [ref=e79]
+        - text: 缓存状态（点击查看详情）
+      - generic [ref=e81]:
+        - generic [ref=e82]:
+          - generic [ref=e83]: "0"
+          - generic [ref=e84]: 已缓存
+        - generic [ref=e86]:
+          - generic [ref=e87]: "1000"
+          - generic [ref=e88]: 最大容量
+    - generic [ref=e89]:
+      - generic [ref=e90]:
+        - img [ref=e91]
+        - text: 最近请求
+      - generic [ref=e93]:
+        - generic [ref=e94]:
+          - generic [ref=e95]: 6:12:20 PM
+          - generic [ref=e96]: "[getUser]"
+          - generic [ref=e97]: "404"
+          - generic [ref=e98]: 1ms
+        - generic [ref=e99]:
+          - generic [ref=e100]: 6:12:20 PM
+          - generic [ref=e101]: "[getUser]"
+        - generic [ref=e102]:
+          - generic [ref=e103]: 6:12:19 PM
+          - generic [ref=e104]: "[getUser]"
+          - generic [ref=e105]: "404"
+          - generic [ref=e106]: 1ms
+        - generic [ref=e107]:
+          - generic [ref=e108]: 6:12:19 PM
+          - generic [ref=e109]: "[getUser]"
+        - generic [ref=e110]:
+          - generic [ref=e111]: 6:12:19 PM
+          - generic [ref=e112]: "[getUser]"
+          - generic [ref=e113]: "404"
+          - generic [ref=e114]: 1ms
+        - generic [ref=e115]:
+          - generic [ref=e116]: 6:12:19 PM
+          - generic [ref=e117]: "[getUser]"
+        - generic [ref=e118]:
+          - generic [ref=e119]: 6:12:19 PM
+          - generic [ref=e120]: "[getUser]"
+          - generic [ref=e121]: "404"
+          - generic [ref=e122]: 1ms
+        - generic [ref=e123]:
+          - generic [ref=e124]: 6:12:19 PM
+          - generic [ref=e125]: "[getUser]"
+        - generic [ref=e126]:
+          - generic [ref=e127]: 6:12:19 PM
+          - generic [ref=e128]: "[getUser]"
+          - generic [ref=e129]: "404"
+          - generic [ref=e130]: 1ms
+        - generic [ref=e131]:
+          - generic [ref=e132]: 6:12:19 PM
+          - generic [ref=e133]: "[getUser]"

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "http-gateway": {
+      "command": "node",
+      "args": [
+        "/Users/lvdaxianer/workspace/my/project/lvdaxianerplus-ai/mcp/mcp-http-gateway/dist/index.js",
+        "--config",
+        "/Users/lvdaxianer/workspace/my/project/lvdaxianerplus-ai/mcp/mcp-http-gateway/test.tools.json"
+      ]
+    }
+  }
+}

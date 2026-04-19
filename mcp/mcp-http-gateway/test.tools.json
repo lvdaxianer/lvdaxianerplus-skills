@@ -1,0 +1,39 @@
+{
+  "baseUrl": "${BASE_URL:-http://localhost:8080}",
+  "tokens": {
+    "default": "${API_TOKEN:-your-api-token-here}"
+  },
+  "logging": {
+    "level": "info",
+    "logRequest": true,
+    "logResponse": true,
+    "logHeaders": true,
+    "sensitiveHeaders": ["authorization", "x-api-key", "authentication"]
+  },
+  "metrics": {
+    "enabled": true,
+    "port": 11112
+  },
+  "healthCheck": {
+    "enabled": true,
+    "port": 11112
+  },
+  "tools": {
+    "getUser": {
+      "description": "示例工具：查询用户信息",
+      "method": "POST",
+      "path": "/api/user/query",
+      "headers": {
+        "Content-Type": "application/json",
+        "authentication": "default"
+      },
+      "body": {
+        "userId": {
+          "description": "用户 ID",
+          "type": "string",
+          "required": true
+        }
+      }
+    }
+  }
+}

@@ -14,11 +14,14 @@ export interface UrlBuildResult {
 /**
  * Build complete URL from path and parameters
  *
- * @param baseUrl - API base URL
- * @param path - API path (e.g., /user/{userId})
+ * @param baseUrl - API base URL (ignored if path is full URL)
+ * @param path - API path (e.g., /user/{userId}) or full URL (e.g., https://api.example.com/user)
  * @param pathParams - Path parameter values (e.g., { userId: "123" })
  * @param queryParams - Query parameter values
  * @returns Complete URL
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-19
  */
 export function buildUrl(
   baseUrl: string,
@@ -26,7 +29,18 @@ export function buildUrl(
   pathParams: Record<string, string> = {},
   queryParams: Record<string, string> = {}
 ): string {
-  let url = baseUrl.replace(/\/$/, '') + path;
+  // Check if path is a full URL (starts with http:// or https://)
+  const isFullUrl = /^https?:\/\//i.test(path);
+
+  // Use path directly if it's a full URL, otherwise concatenate with baseUrl
+  let url: string;
+  if (isFullUrl) {
+    // Path is complete URL, use it directly
+    url = path;
+  } else {
+    // Path is relative, concatenate with baseUrl
+    url = baseUrl.replace(/\/$/, '') + path;
+  }
 
   // Replace path parameters {param}
   for (const [key, value] of Object.entries(pathParams)) {

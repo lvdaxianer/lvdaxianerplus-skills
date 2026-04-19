@@ -1,0 +1,70 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - heading "MCP Gateway" [level=1] [ref=e4]
+    - navigation [ref=e5]:
+      - button "总览" [ref=e6] [cursor=pointer]
+      - button "工具管理" [active] [ref=e7] [cursor=pointer]
+  - generic [ref=e120]:
+    - generic [ref=e121]:
+      - generic [ref=e122]:
+        - img [ref=e123]
+        - text: 全局 Mock 控制
+      - button "Mock 已开启" [ref=e126] [cursor=pointer]
+    - generic [ref=e127]:
+      - generic [ref=e128]:
+        - img [ref=e129]
+        - text: 工具列表
+      - table [ref=e132]:
+        - rowgroup [ref=e133]:
+          - row "名称 方法 路径 Mock 操作" [ref=e134]:
+            - columnheader "名称" [ref=e135]
+            - columnheader "方法" [ref=e136]
+            - columnheader "路径" [ref=e137]
+            - columnheader "Mock" [ref=e138]
+            - columnheader "操作" [ref=e139]
+        - rowgroup [ref=e140]:
+          - 'row "getUser GET /api/user/{userId} 开启 关闭 配置" [ref=e141]':
+            - cell "getUser" [ref=e142]:
+              - strong [ref=e143]: getUser
+            - cell "GET" [ref=e144]
+            - 'cell "/api/user/{userId}" [ref=e145]'
+            - cell "开启" [ref=e146]
+            - cell "关闭 配置" [ref=e147]:
+              - button "关闭" [ref=e148] [cursor=pointer]
+              - button "配置" [ref=e149] [cursor=pointer]
+          - row "addAge POST /api/user/age 开启 关闭 配置" [ref=e150]:
+            - cell "addAge" [ref=e151]:
+              - strong [ref=e152]: addAge
+            - cell "POST" [ref=e153]
+            - cell "/api/user/age" [ref=e154]
+            - cell "开启" [ref=e155]
+            - cell "关闭 配置" [ref=e156]:
+              - button "关闭" [ref=e157] [cursor=pointer]
+              - button "配置" [ref=e158] [cursor=pointer]
+          - row "queryUser GET /api/user 开启 关闭 配置" [ref=e159]:
+            - cell "queryUser" [ref=e160]:
+              - strong [ref=e161]: queryUser
+            - cell "GET" [ref=e162]
+            - cell "/api/user" [ref=e163]
+            - cell "开启" [ref=e164]
+            - cell "关闭 配置" [ref=e165]:
+              - button "关闭" [ref=e166] [cursor=pointer]
+              - button "配置" [ref=e167] [cursor=pointer]
+          - row "testHealthCheck GET /health 关闭 开启 配置" [ref=e168]:
+            - cell "testHealthCheck" [ref=e169]:
+              - strong [ref=e170]: testHealthCheck
+            - cell "GET" [ref=e171]
+            - cell "/health" [ref=e172]
+            - cell "关闭" [ref=e173]
+            - cell "开启 配置" [ref=e174]:
+              - button "开启" [ref=e175] [cursor=pointer]
+              - button "配置" [ref=e176] [cursor=pointer]
+          - row "testDashboard GET /api/dashboard/stats 关闭 开启 配置" [ref=e177]:
+            - cell "testDashboard" [ref=e178]:
+              - strong [ref=e179]: testDashboard
+            - cell "GET" [ref=e180]
+            - cell "/api/dashboard/stats" [ref=e181]
+            - cell "关闭" [ref=e182]
+            - cell "开启 配置" [ref=e183]:
+              - button "开启" [ref=e184] [cursor=pointer]
+              - button "配置" [ref=e185] [cursor=pointer]

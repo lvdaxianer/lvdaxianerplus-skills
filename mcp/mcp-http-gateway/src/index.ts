@@ -9,8 +9,10 @@ import { loadConfig } from './config/loader.js';
 import { startStdioServer } from './core/server.js';
 import { startHttpServer } from './routes/http-server.js';
 import { initCache } from './features/cache.js';
-import { setLogLevel } from './middleware/logger.js';
+import { setLogLevel, initFileLogging } from './middleware/logger.js';
 import { logger } from './middleware/logger.js';
+import { initDatabase, closeDatabase } from './database/connection.js';
+import { initSqliteLogger, stopSqliteLogger, flushBuffers } from './database/sqlite-logger.js';
 
 interface CliArgs {
   configPath: string;
@@ -50,14 +52,32 @@ async function main(): Promise<void> {
     setLogLevel(config.logging.level);
   }
 
+  // Initialize file logging if enabled
+  if (config.logging?.file?.enabled) {
+    initFileLogging(config.logging.file);
+    logger.info('File logging enabled', { logFile: logger.getLogFile() });
+  }
+
+  // Initialize SQLite database if enabled
+  if (config.sqlite?.enabled) {
+    initDatabase(config.sqlite);
+    initSqliteLogger({
+      batchSize: 100,
+      syncInterval: 5000,
+    });
+    logger.info('SQLite logging enabled', { dbPath: config.sqlite.dbPath });
+  }
+
   logger.info('MCP HTTP Gateway starting...');
   logger.info(`Loaded ${Object.keys(config.tools).length} tools`);
 
   // Start HTTP server for health checks and dashboard
+  // Always start HTTP server when --http flag is provided
   if (config.metrics?.enabled || config.healthCheck?.enabled || cliArgs.httpEnabled) {
     const port = config.metrics?.port ?? config.healthCheck?.port ?? 11112;
-    startHttpServer({ config });
+    await startHttpServer({ config, port });
     logger.info(`Dashboard available at http://localhost:${port}/dashboard`);
+    logger.info(`Health check available at http://localhost:${port}/health`);
   }
 
   // Start STDIO server for MCP protocol
@@ -74,4 +94,25 @@ main().catch((error) => {
   const errorMessage = error instanceof Error ? error.message : String(error);
   logger.error('[启动] Unexpected error during startup', { error: errorMessage });
   process.exit(1);
+});
+
+// Cleanup on process exit
+process.on('SIGINT', () => {
+  logger.info('[关闭] Received SIGINT, shutting down...');
+  flushBuffers();
+  stopSqliteLogger();
+  closeDatabase();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  logger.info('[关闭] Received SIGTERM, shutting down...');
+  flushBuffers();
+  stopSqliteLogger();
+  closeDatabase();
+  process.exit(0);
+});
+
+process.on('beforeExit', () => {
+  flushBuffers();
 });
