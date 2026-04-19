@@ -20,8 +20,14 @@
     "enabled": false,
     "maxAttempts": 3,
     "delay": 1000,
-    "backoff": 2.0,
-    "retryOn": [429, 500, 502, 503, 504]
+    "backoff": 2,
+    "retryOn": [
+      429,
+      500,
+      502,
+      503,
+      504
+    ]
   },
   "circuitBreaker": {
     "enabled": false,
@@ -39,7 +45,20 @@
     "logRequest": true,
     "logResponse": true,
     "logHeaders": false,
-    "sensitiveHeaders": ["authorization", "x-api-key"]
+    "sensitiveHeaders": [
+      "authorization",
+      "x-api-key"
+    ],
+    "file": {
+      "enabled": false,
+      "dir": "./logs",
+      "maxSize": 300,
+      "rotateByMonth": true,
+      "logRequestBody": true,
+      "logResponseBody": true,
+      "logRequestHeaders": true,
+      "logResponseHeaders": true
+    }
   },
   "metrics": {
     "enabled": true,
@@ -55,8 +74,8 @@
     "httpPort": 11112
   },
   "tokens": {
-    "A": "sk-token-aaa",
-    "B": "sk-token-bbb"
+    "A": "***MASKED***",
+    "B": "***MASKED***"
   },
   "tools": {
     "addAge": {
@@ -112,5 +131,42 @@
         }
       }
     }
+  },
+  "sqlite": {
+    "enabled": true,
+    "dbPath": "./data/logs.db",
+    "maxDays": 30,
+    "batchSize": 100,
+    "syncInterval": 60000
+  },
+  "compression": {
+    "enabled": false,
+    "threshold": 1024,
+    "level": 6,
+    "mimeTypes": [
+      "application/json",
+      "text/plain",
+      "text/html"
+    ]
+  },
+  "hotReload": {
+    "enabled": true,
+    "watchFile": true,
+    "debounceMs": 1000
+  },
+  "backup": {
+    "enabled": true,
+    "dir": "./backups",
+    "maxVersions": 10,
+    "schedule": "0 * * * *"
+  },
+  "alert": {
+    "enabled": true,
+    "logDir": "./logs",
+    "errorRateThreshold": 10
+  },
+  "audit": {
+    "enabled": true,
+    "maskSensitiveFields": true
   }
 }
