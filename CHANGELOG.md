@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
+- 更新依赖和配置文件 (fb7d274)
+
+### Changed
+- 精简文档，聚焦核心能力 (e8dc0b5)
+
+- 添加 Dashboard 改造故事线文档 (ee9f3f6)
+
+### Changed
+- 增强 Mock 工具功能 (309bec3)
+
+- 增强 SQLite 日志持久化功能 (90ed1d7)
+
+### Changed
+- 集成 handlers 和 EJS 模板 (8d1d32e)
+
+- 使用 EJS 模板替代硬编码 HTML (2d22b75)
+
+### Changed
+- 拆分路由处理为独立 handler 模块 (603dcd0)
+
+- 重构代码审查规范，提取代码示例并新增多个规范章节 (c282aee)
+
+### Changed
+- 增强 Dashboard 功能和 SQLite 持久化日志 (729f7f1)
+
 - 添加 MCP HTTP Gateway 服务 (678299f)
 
 ### Changed
