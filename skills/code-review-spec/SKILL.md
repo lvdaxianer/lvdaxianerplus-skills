@@ -1,6 +1,6 @@
 ---
 name: code-review-spec
-description: Use when performing code review, code review after changes, code formatting, editing code, modifying code, or when user asks to review code. Applies to all programming languages (Java, Python, Go, TypeScript, Vue, etc.). Checks: code specifications, class/method comments, comment ratio (≥40%), naming conventions, security rules, exception handling, logging standards, database specs, API design, git commit format, dependency management, and code complexity limits. Trigger automatically when user modifies or formats code.
+description: Use when performing code review, code review after changes, code formatting, editing code, modifying code, or when user asks to review code. Applies to all programming languages (Java, Python, Go, TypeScript, Vue, etc.). Checks: code specifications, class/method comments, comment ratio (≥60%), naming conventions, security rules, exception handling, logging standards, database specs, API design, git commit format, dependency management, code complexity limits, null safety, function parameters limit, code duplication detection, magic numbers/constants, collection capacity, string concatenation, equals/hashCode. Trigger automatically when user modifies or formats code.
 ---
 
 # code-review-spec.md
@@ -25,7 +25,7 @@ description: Use when performing code review, code review after changes, code fo
 
 ## 2. 作者标识
 
-所有代码的 `@author` / `@author` 注解必须填写 `lvdaxianerplus`。
+所有代码的 `@author` 注解必须填写 `lvdaxianerplus`。
 
 ## 3. 代码规范
 
@@ -33,262 +33,21 @@ description: Use when performing code review, code review after changes, code fo
 
 ### 3.1. 方法注释规范
 
-每个方法必须包含完整的文档注释，风格随语言而变：
+每个方法必须包含完整的文档注释，风格随语言而变。
 
-<details>
-<summary><b>Java / Go</b></summary>
-
-```java
-/**
- * 方法功能的简要描述
- *
- * @param paramName 参数描述（有效值、无效值）
- * @param paramName2 参数描述
- * @return 返回值描述（可能的值、边界情况）
- * @author lvdaxianerplus
- * @date 创建日期（格式：yyyy-MM-dd）
- */
-public void methodName(String paramName) {
-
-}
-```
-
-```go
-// MethodName 方法功能的简要描述
-//
-// Parameters:
-//   - paramName: 参数描述（有效值、无效值）
-//   - paramName2: 参数描述
-//
-// Returns: 返回值描述（可能的值、边界情况）
-//
-// Author: lvdaxianerplus
-// Date: 2024-01-15
-func MethodName(paramName string) {
-
-}
-```
-
-</details>
-
-<details>
-<summary><b>TypeScript / Vue (TypeScript)</b></summary>
-
-```typescript
-/**
- * 方法功能的简要描述
- *
- * @param paramName - 参数描述（有效值、无效值）
- * @param paramName2 - 参数描述
- * @returns 返回值描述（可能的值、边界情况）
- * @author lvdaxianerplus
- * @date 2024-01-15
- */
-function methodName(paramName: string): void {
-
-}
-
-/**
- * Vue 组合式函数示例
- *
- * @param userId - 用户 ID（有效值 > 0）
- * @returns 用户信息对象
- * @author lvdaxianerplus
- * @date 2024-01-15
- */
-async function fetchUser(userId: number): Promise<User> {
-
-}
-```
-
-```typescript
-// Vue 组件方式（script setup）
-// <script setup lang="ts">
-/**
- * 获取用户信息
- *
- * @param userId - 用户 ID（有效值 > 0）
- * @returns 用户信息对象
- * @author lvdaxianerplus
- * @date 2024-01-15
- */
-const getUser = async (userId: number): Promise<User> => {
-
-};
-```
-
-</details>
-
-<details>
-<summary><b>Python</b></summary>
-
-```python
-def method_name(param_name: str) -> None:
-    """
-    方法功能的简要描述
-
-    Args:
-        param_name: 参数描述（有效值、无效值）
-        param_name2: 参数描述
-
-    Returns:
-        返回值描述（可能的值、边界情况）
-
-    Author: lvdaxianerplus
-    Date: 2024-01-15
-    """
-    pass
-```
-
-```python
-async def fetch_user(user_id: int) -> dict:
-    """
-    获取用户信息
-
-    Args:
-        user_id: 用户 ID（有效值 > 0）
-
-    Returns:
-        用户信息字典
-
-    Raises:
-        UserNotFoundError: 用户不存在时抛出
-
-    Author: lvdaxianerplus
-    Date: 2024-01-15
-    """
-    pass
-```
-
-</details>
+> **代码示例**：详见 [references/method-comments.md](references/method-comments.md)
 
 ### 3.2. 类注释规范
 
-每个类必须包含完整的文档注释：
+每个类必须包含完整的文档注释。
 
-<details>
-<summary><b>Java / Go</b></summary>
-
-```java
-/**
- * 类描述，说明核心功能和职责
- *
- * @author lvdaxianerplus
- * @date 创建日期（格式：yyyy-MM-dd）
- */
-public class ClassName {
-
-}
-```
-
-```go
-// PackageName 类/模块描述，说明核心功能和职责
-//
-// Author: lvdaxianerplus
-// Date: 2024-01-15
-package service
-```
-
-</details>
-
-<details>
-<summary><b>TypeScript / Vue</b></summary>
-
-```typescript
-/**
- * 类/模块描述，说明核心功能和职责
- *
- * @author lvdaxianerplus
- * @date 2024-01-15
- */
-export class UserService {
-
-}
-
-/**
- * Vue 组件描述，说明核心功能和职责
- *
- * @author lvdaxianerplus
- * @date 2024-01-15
- */
-export default defineComponent({
-
-});
-```
-
-</details>
-
-<details>
-<summary><b>Python</b></summary>
-
-```python
-"""
-类/模块描述，说明核心功能和职责
-
-Author: lvdaxianerplus
-Date: 2024-01-15
-"""
-class UserService:
-
-    pass
-```
-
-```python
-"""
-Vue 组件模块描述，说明核心功能和职责
-
-Author: lvdaxianerplus
-Date: 2024-01-15
-"""
-```
-
-</details>
+> **代码示例**：详见 [references/class-comments.md](references/class-comments.md)
 
 ### 3.3. 条件分支注释规范
 
-每个 if-else 分支必须包含清晰的注释（所有语言通用）：
+每个 if-else 分支必须包含清晰的注释（所有语言通用）。
 
-<details>
-<summary><b>Java / Go / TypeScript / Python</b></summary>
-
-```java
-// 条件注释：什么情况下触发此分支
-if (condition) {
-    // 处理逻辑
-} else {
-    // 替代处理逻辑
-}
-```
-
-```go
-// 条件注释：什么情况下触发此分支
-if condition {
-    // 处理逻辑
-} else {
-    // 替代处理逻辑
-}
-```
-
-```typescript
-// 条件注释：什么情况下触发此分支
-if (condition) {
-    // 处理逻辑
-} else {
-    // 替代处理逻辑
-}
-```
-
-```python
-# 条件注释：什么情况下触发此分支
-if condition:
-    # 处理逻辑
-    pass
-else:
-    # 替代处理逻辑
-    pass
-```
-
-</details>
+> **代码示例**：详见 [references/if-else-comments.md](references/if-else-comments.md)
 
 **注意**：优先使用 if-else 结构而非 switch-case。如必须使用 switch-case，每个 case 必须有对应的 default 分支。
 
@@ -301,133 +60,7 @@ else:
 - 如果 if 分支是**设置值**的操作，else 分支必须设置一个**合理的值**（根据业务逻辑，else 可能设置初期值、默认值、空值、备选值、降级值等）
 - 这是代码健壮性的基础，确保所有分支路径都被正确处理
 
-<details>
-<summary><b>正确示例</b></summary>
-
-```java
-// 正确：if 设置值，else 设置合理值
-int result;
-if (condition) {
-    result = calculateValue();  // 正常计算结果
-} else {
-    result = fallbackValue();  // 降级处理值
-}
-
-// 正确：if 有值，else 设置空状态/默认值
-String displayName;
-if (user != null) {
-    displayName = user.getName();
-} else {
-    displayName = "匿名用户";  // 空状态下的合理显示值
-}
-
-// 正确：布尔值设置
-boolean isActive;
-if (status == Status.ENABLED) {
-    isActive = true;
-} else {
-    isActive = false;  // 其他状态统一为 false
-}
-
-// 正确：业务枚举值
-OrderStatus status;
-if (isPaid) {
-    status = OrderStatus.PAID;
-} else {
-    status = OrderStatus.UNPAID;  // 未支付状态
-}
-```
-
-```typescript
-// 正确：if 设置值，else 设置备选值
-const discount = isMember ? calculateDiscount() : 0;  // 非会员无折扣
-
-// 正确：else 设置合理默认值
-let userName: string;
-if (currentUser) {
-    userName = currentUser.name;
-} else {
-    userName = "游客";  // 空状态下的合理显示值
-}
-
-// 正确：降级处理
-const config = isConfigLoaded ? loadedConfig : defaultConfig;
-```
-
-```python
-# 正确：if 设置值，else 设置备选值
-result = calculate_value() if condition else fallback_value()
-
-# 正确：else 设置空状态/默认值
-items = fetch_items() if has_items else []
-
-# 正确：业务逻辑分支
-status = OrderStatus.PAID if is_paid else OrderStatus.PENDING
-```
-
-</details>
-
-<details>
-<summary><b>错误示例</b></summary>
-
-```java
-// 错误：if 无 else，缺失分支处理
-int result;
-if (condition) {
-    result = calculateValue();  // 只处理了 condition=true 的情况
-}
-// result 可能未初始化
-
-// 错误：缺少 else 分支处理
-boolean isValid;
-if (value > 0) {
-    isValid = true;
-}
-// isValid 在 false 时未处理
-
-// 错误：用 return 替代 else，逻辑不清晰
-if (user != null) {
-    return user.getName();
-}
-return "匿名用户";  // 这种写法不如 else 清晰，且容易出错
-```
-
-```typescript
-// 错误：if 无 else
-let result: number;
-if (condition) {
-    result = 100;
-}
-// result 可能未定义
-
-// 错误：缺少 else 分支
-let status: string;
-if (isSuccess) {
-    status = "成功";
-}
-// 应该：else { status = "失败"; }
-```
-
-```python
-# 错误：if 无 else
-result = None
-if condition:
-    result = calculate_value()
-# result 可能在 else 时仍为 None
-```
-
-</details>
-
-#### else 分支的合理值类型
-
-| 场景 | else 可能设置的值 |
-|------|------------------|
-| 空状态 | 空字符串 `""`、`null`、空集合 `[]` |
-| 默认值 | `0`、`false`、`DEFAULT_VALUE` |
-| 备选值 | `fallbackValue()`、备选数据源 |
-| 降级值 | `defaultConfig`、`ERROR_CODE` |
-| 业务枚举 | `OrderStatus.UNPAID`、`UserRole.GUEST` |
-| 空安全 | `Optional.empty()`、`Result.Err()` |
+> **代码示例（正确/错误示例及合理值类型表）**：详见 [references/if-else-pairing.md](references/if-else-pairing.md)
 
 ### 3.4. 代码注释要求
 
@@ -448,79 +81,7 @@ if condition:
 - 提升系统整体吞吐量
 - 降低资源占用
 
-<details>
-<summary><b>Java</b></summary>
-
-```java
-// 错误：for 循环逐条处理
-for (User user : users) {
-    userRepository.save(user);
-}
-
-// 正确：批量处理
-userRepository.saveAll(users);
-```
-
-```java
-// 错误：for 循环逐条查询
-for (Long id : ids) {
-    User user = userRepository.findById(id);
-    // 处理逻辑
-}
-
-// 正确：批量查询
-List<User> users = userRepository.findAllById(ids);
-```
-
-</details>
-
-<details>
-<summary><b>Python</b></summary>
-
-```python
-# 错误：for 循环逐条处理
-for item in items:
-    process_item(item)
-
-# 正确：批量处理
-process_batch(items)
-```
-
-```python
-# 错误：for 循环逐条插入
-for record in records:
-    db.insert(record)
-
-# 正确：批量插入
-db.insert_many(records)
-```
-
-</details>
-
-<details>
-<summary><b>TypeScript</b></summary>
-
-```typescript
-// 错误：for 循环逐条处理
-for (const id of ids) {
-    await api.delete(id);
-}
-
-// 正确：批量处理
-await api.deleteBatch(ids);
-```
-
-```typescript
-// 错误：for 循环逐条查询
-for (const id of ids) {
-    const item = await db.findById(id);
-}
-
-# 正确：批量查询
-const items = await db.findByIds(ids);
-```
-
-</details>
+> **代码示例（Java/Python/TypeScript）**：详见 [references/batch-processing.md](references/batch-processing.md)
 
 ### 3.7. 循环内禁止调用远程服务或数据库
 
@@ -534,106 +95,13 @@ const items = await db.findByIds(ids);
 - **服务雪崩**：下游服务收到海量并发请求，容易触发限流或熔断
 - **事务风险**：在循环内操作数据库可能导致长事务，锁竞争加剧
 
-<details>
-<summary><b>正确示例</b></summary>
-
-```java
-// 正确：先批量查询，再循环处理
-List<User> users = userRepository.findAllById(ids);  // 批量查询
-List<UserDTO> results = new ArrayList<>();
-for (User user : users) {
-    UserDTO dto = transform(user);  // 仅内存操作
-    results.add(dto);
-}
-```
-
-```typescript
-// 正确：先批量获取，再循环处理
-const users = await userService.findByIds(userIds);  // 批量查询
-const results = users.map(user => transform(user));   // 仅内存操作
-```
-
-```python
-# 正确：先批量查询，再循环处理
-users = user_repository.find_all_by_ids(user_ids)  # 批量查询
-results = [transform(user) for user in users]       # 仅内存操作
-```
-
-```go
-// 正确：先批量查询，再循环处理
-users := userRepository.FindAllByIDs(ids)  // 批量查询
-for _, user := range users {
-    results = append(results, transform(user))  // 仅内存操作
-}
-```
-
-</details>
-
-<details>
-<summary><b>错误示例</b></summary>
-
-```java
-// 错误：在 for 循环内调用数据库
-for (Long id : ids) {
-    User user = userRepository.findById(id);  // 每条记录一次数据库查询
-}
-
-// 错误：在 forEach 内调用远程服务
-userIds.forEach(id -> {
-    remoteService.getUserDetail(id);  // 每条记录一次远程调用
-});
-```
-
-```typescript
-// 错误：在 map 内调用远程服务
-const results = userIds.map(async id => {
-    return await remoteService.getUserDetail(id);  // 每条记录一次远程调用
-});
-
-// 错误：在 filter 内调用数据库
-const activeUsers = userIds.filter(id => {
-    return database.isUserActive(id);  // 每条记录一次数据库查询
-});
-```
-
-```python
-# 错误：在 for 循环内调用远程服务
-for user_id in user_ids:
-    user = api.get_user(user_id)  # 每条记录一次远程调用
-
-# 错误：在列表推导式内调用数据库
-active_users = [u for u in db.get_all_users() if db.is_active(u.id)]  # 每条记录一次数据库查询
-```
-
-```go
-// 错误：在 for 循环内调用远程服务
-for _, id := range ids {
-    user, _ := remoteService.GetUserDetail(id)  // 每条记录一次远程调用
-}
-```
-
-</details>
+> **代码示例（正确/错误示例及滑动窗口批处理）**：详见 [references/loop-remote-calls.md](references/loop-remote-calls.md)
 
 **正确做法**：
 1. **批量接口**：调用方提供批量查询 API（如 `findAllById(ids)`、`getUsersByIds(ids)`）
 2. **内存操作**：循环仅做内存数据转换、聚合等无副作用操作
 3. **异步批处理**：如必须分批处理，使用滑动窗口或并发批处理（如每批 100 条）
 4. **缓存预热**：热点数据提前加载到缓存，减少循环内远程调用
-
-**示例：滑动窗口批处理**
-
-```java
-// 正确：分批处理，每批 100 条
-private static final int BATCH_SIZE = 100;
-
-public void processUsers(List<Long> userIds) {
-    // 分批处理大列表，避免一次性加载或处理
-    for (int i = 0; i < userIds.size(); i += BATCH_SIZE) {
-        List<Long> batch = userIds.subList(i, Math.min(i + BATCH_SIZE, userIds.size()));
-        processBatch(batch);  // 每批内部仍是批量操作
-    }
-}
-```
 
 ### 3.8. Java 线程池规范
 
@@ -645,65 +113,92 @@ public void processUsers(List<Long> userIds) {
 - 必须使用有业务含义的日志标识
 - 线程池名称应体现业务用途
 
-#### 3.8.2. 线程池定义示例
+> **代码示例（正确/错误示例及命名规范表）**：详见 [references/thread-pool.md](references/thread-pool.md)
 
-```java
-// 定义业务线程池
-private static final ThreadFactory USER_THREAD_FACTORY = new ThreadFactoryBuilder()
-    .setNameFormat("user-handler-%d")
-    .setUncaughtExceptionHandler((t, e) -> {
-        log.error("[用户处理] 线程 {} 异常", t.getName(), e);
-    })
-    .build();
+### 3.9. 空值处理规范（Null Safety）
 
-private final ExecutorService userExecutor = new ThreadPoolExecutor(
-    10, 20, 60L, TimeUnit.SECONDS,
-    new LinkedBlockingQueue<>(1000),
-    USER_THREAD_FACTORY,
-    new ThreadPoolExecutor.CallerRunsPolicy()
-);
+> **强制要求**：禁止直接返回 `null`，必须使用语言提供的空值安全机制。
 
-// 线程池执行时必须打印日志
-public void processUserTask(User user) {
-    userExecutor.execute(() -> {
-        log.info("[用户处理] 开始处理用户: {}", user.getId());
-        try {
-            // 业务逻辑
-            log.info("[用户处理] 用户处理成功: {}", user.getId());
-        } catch (Exception e) {
-            log.error("[用户处理] 用户处理失败: {}", user.getId(), e);
-        }
-    });
-}
-```
+**核心原则**：
+- 返回值可能不存在时，使用 `Optional`/`T | undefined`/`T | None` 显式声明
+- 调用方必须处理可能的空值情况，提供默认值或明确异常
+- 参数传递时不使用 Optional 包装，直接传对象并在方法内处理
 
-#### 3.8.3. 常见业务线程池命名
+> **代码示例（Java/TypeScript/Python/Go 各语言规范、返回值/参数/检查规范表）**：详见 [references/null-safety.md](references/null-safety.md)
 
-| 业务场景 | 线程池名称示例 |
-|----------|---------------|
-| 用户处理 | `user-handler-%d`、`user-processor-%d` |
-| 订单处理 | `order-handler-%d`、`order-processor-%d` |
-| 消息发送 | `msg-sender-%d`、`notification-sender-%d` |
-| 数据同步 | `data-sync-%d`、`sync-worker-%d` |
-| 文件处理 | `file-processor-%d`、`file-handler-%d` |
+### 3.10. 函数参数数量限制
 
-#### 3.8.4. 错误示例
+> **强制要求**：函数参数数量必须严格控制，超过限制必须重构。
 
-```java
-// 错误：使用匿名线程池，无有意义名称
-ExecutorService executor = Executors.newFixedThreadPool(10);
+**参数数量规范**：
 
-// 错误：使用 @Async 默认线程池
-@Async
-public void process() {
-    // 无法追踪线程
-}
+| 参数数量 | 处理方式 |
+|----------|----------|
+| 1-3 个 | 直接传参，清晰简洁 |
+| 4-5 个 | 使用配置对象/结构体/字典 |
+| 6+ 个 | **必须重构**：拆分函数或封装参数类 |
 
-// 错误：缺少日志
-executor.execute(() -> {
-    doSomething();
-});
-```
+> **代码示例（各语言正确/错误示例、参数对象设计原则）**：详见 [references/function-parameters.md](references/function-parameters.md)
+
+### 3.11. 代码重复检测
+
+> **强制要求**：相同或相似代码出现多次时，必须提取为公共方法/函数。
+
+**重复代码检测标准**：
+
+| 重复程度 | 处理要求 |
+|----------|----------|
+| 相同代码块 ≥ 3 处 | **必须**提取为公共方法 |
+| 相似代码块 ≥ 2 处 | **应该**提取，使用参数区分差异 |
+| 结构相似但逻辑不同 | 考虑抽象模板方法模式 |
+
+> **代码示例（各语言提取公共方法、模板方法模式、检测方法）**：详见 [references/code-duplication.md](references/code-duplication.md)
+
+### 3.12. 常量与魔法数字规范
+
+> **强制要求**：禁止在代码中直接使用魔法数字、魔法字符串，必须定义为常量或枚举。
+
+**魔法数字定义**：代码中直接出现的、含义不明确的数字或字符串值。
+
+**常量定义原则**：
+- 使用 UPPER_SNAKE_CASE 命名（Go 可用 CamelCase）
+- 按业务领域分组组织常量
+- 固定选项优先使用枚举，单值阈值使用常量
+
+> **代码示例（各语言常量/枚举示例、命名规范、组织方式）**：详见 [references/magic-numbers.md](references/magic-numbers.md)
+
+### 3.13. 集合初始化容量规范
+
+> **强制要求**：创建集合时必须指定合理的初始容量，避免不必要的扩容开销。
+
+**扩容影响**：
+- 每次扩容创建新数组 + 复制旧数据
+- 多次扩容导致额外内存分配和 CPU 消耗
+- HashMap 需要考虑 loadFactor（默认 0.75）
+
+> **代码示例（各语言集合容量规范、默认容量表、容量计算公式）**：详见 [references/collection-capacity.md](references/collection-capacity.md)
+
+### 3.14. 字符串拼接规范
+
+> **强制要求**：禁止在循环内使用 `+` 或 `concat` 拼接字符串，必须使用 StringBuilder/StringBuffer 或语言的字符串连接方法。
+
+**性能影响**：
+- 字符串不可变，每次拼接创建新对象
+- 循环内拼接性能呈 O(n²) 下降
+- 大量临时对象增加 GC 压力
+
+> **代码示例（各语言正确/错误示例、拼接方法选择指南、性能对比）**：详见 [references/string-concatenation.md](references/string-concatenation.md)
+
+### 3.15. equals/hashCode 规范
+
+> **强制要求**：重写 `equals` 方法时**必须**同时重写 `hashCode` 方法，否则会导致 Map/Set 行为异常。
+
+**契约关系**：
+- 相等对象必须有相同的哈希值
+- 哈希值相同不一定相等（哈希冲突）
+- 多次调用 hashCode 必须返回相同值
+
+> **代码示例（各语言正确实现、IDE生成/Lombok、实现清单）**：详见 [references/equals-hashcode.md](references/equals-hashcode.md)
 
 ## 4. 命名规范
 
@@ -748,86 +243,7 @@ executor.execute(() -> {
 - 不要捕获 Throwable/Exception/Error（范围太广）
 - 不要在 finally 块中抛出异常
 
-### 6.3. 异常处理示例
-
-<details>
-<summary><b>Java</b></summary>
-
-```java
-try {
-    // 业务逻辑
-} catch (SpecificException e) {
-    // 处理特定异常
-    throw new BusinessException("错误描述", e);
-}
-
-// 异常链
-throw new BusinessException("原始错误", causeException);
-```
-
-</details>
-
-<details>
-<summary><b>Go</b></summary>
-
-```go
-result, err := doSomething()
-if err != nil {
-    // 处理特定错误
-    return fmt.Errorf("操作失败: %w", err)
-}
-```
-
-</details>
-
-<details>
-<summary><b>TypeScript / Vue</b></summary>
-
-```typescript
-try {
-    // 业务逻辑
-} catch (error) {
-    // 处理特定错误
-    if (error instanceof SpecificException) {
-        throw new BusinessException("错误描述", error);
-    }
-    throw error;
-}
-```
-
-```typescript
-// Vue 组合式函数中的错误处理
-const fetchUser = async (userId: number): Promise<User> => {
-    try {
-        const response = await api.getUser(userId);
-        return response.data;
-    } catch (error) {
-        if (error instanceof NotFoundError) {
-            throw new UserNotFoundException(`用户 ${userId} 不存在`, error);
-        }
-        throw error;
-    }
-};
-```
-
-</details>
-
-<details>
-<summary><b>Python</b></summary>
-
-```python
-try:
-    # 业务逻辑
-    pass
-except SpecificException as e:
-    # 处理特定异常
-    raise BusinessException("错误描述") from e
-
-# 异常链
-raise BusinessException("原始错误") from cause_exception
-```
-
-</details>
+> **代码示例（Java/Go/TypeScript/Python）**：详见 [references/exception-handling.md](references/exception-handling.md)
 
 ## 7. 日志规范
 
@@ -850,128 +266,7 @@ timestamp [thread-name] level class-name:line-number - message
 - 日志文件必须配置轮转策略
 - **必须带有业务标识**，格式：`[业务标识] 消息内容`
 
-#### 7.3.1. 业务标识日志示例
-
-```java
-// 正确：带有业务标识
-log.info("[用户登录] 用户登录成功, userId={}", userId);
-log.warn("[订单处理] 库存不足, orderId={}", orderId);
-log.error("[支付服务] 支付失败, orderId={}, error={}", orderId, e.getMessage());
-
-// 错误：缺少业务标识
-log.info("用户登录成功, userId={}", userId);
-log.info("订单处理完成");
-```
-
-```go
-// 正确：带有业务标识
-log.WithFields(log.Fields{"business": "user-login"}).Info("[用户登录] 用户登录成功")
-log.WithFields(log.Fields{"business": "order"}).Error("[订单处理] 订单处理失败")
-
-// 错误：缺少业务标识
-log.Info("用户登录成功")
-```
-
-```typescript
-// 正确：带有业务标识
-logger.info('[用户登录] 用户登录成功', { userId });
-logger.error('[支付服务] 支付异常', { orderId, error: e.message });
-
-// 错误：缺少业务标识
-logger.info('用户登录成功');
-```
-
-```python
-# 正确：带有业务标识
-logger.info(f"[用户登录] 用户登录成功, user_id={user_id}")
-logger.error(f"[订单处理] 订单处理失败, order_id={order_id}")
-
-# 错误：缺少业务标识
-logger.info("用户登录成功")
-```
-
-#### 7.3.2. 常见业务标识
-
-| 业务场景 | 日志标识 | 示例 |
-|----------|----------|------|
-| 用户登录 | `[用户登录]` | `log.info("[用户登录] 用户登录成功")` |
-| 用户注册 | `[用户注册]` | `log.info("[用户注册] 新用户注册成功")` |
-| 订单创建 | `[订单创建]` | `log.info("[订单创建] 订单创建成功")` |
-| 订单支付 | `[订单支付]` | `log.info("[订单支付] 支付成功")` |
-| 文件上传 | `[文件上传]` | `log.info("[文件上传] 文件上传成功")` |
-| 数据同步 | `[数据同步]` | `log.info("[数据同步] 同步完成")` |
-| 接口调用 | `[API调用]` | `log.info("[API调用] 调用外部接口成功")` |
-
-<details>
-<summary><b>Java (SLF4J)</b></summary>
-
-```java
-// 正确
-log.info("User {} logged in successfully", username);
-
-// 错误
-log.info("User " + username + " logged in successfully");
-```
-
-</details>
-
-<details>
-<summary><b>Go</b></summary>
-
-```go
-// 正确
-log.Printf("User %s logged in successfully", username)
-
-// 错误
-log.Printf("User " + username + " logged in successfully")
-
-// 使用结构化日志（推荐）
-log.WithFields(log.Fields{
-    "user": username,
-}).Info("User logged in successfully")
-```
-
-</details>
-
-<details>
-<summary><b>TypeScript / Vue</b></summary>
-
-```typescript
-// 正确：使用占位符
-logger.info(`User ${username} logged in successfully`);
-
-// 错误：不使用日志库
-console.log("User " + username + " logged in successfully");
-
-// Vue 项目中推荐使用结构化日志
-const logger = {
-    info: (message: string, meta?: Record<string, unknown>) => {
-        console.log(JSON.stringify({ level: 'info', message, ...meta }));
-    }
-};
-```
-
-</details>
-
-<details>
-<summary><b>Python</b></summary>
-
-```python
-import logging
-
-logger = logging.getLogger(__name__)
-
-# 正确：使用占位符
-logger.info("User %s logged in successfully", username)
-
-# 错误：字符串拼接
-logger.info("User " + username + " logged in successfully")
-
-# 使用结构化日志（推荐）
-logger.info("User %s logged in successfully", username, extra={"user": username})
-```
-
-</details>
+> **代码示例（业务标识日志、常见业务标识表、占位符使用）**：详见 [references/logging.md](references/logging.md)
 
 ## 8. 数据库规范
 
@@ -980,40 +275,29 @@ logger.info("User %s logged in successfully", username, extra={"user": username}
 - 保持事务范围尽可能小，避免长事务
 - 不全表扫描，索引列限制（≤ 5）
 
-```sql
--- 正确
-SELECT * FROM `users` WHERE `id` = ? LIMIT 10;
-
--- 错误
-SELECT * FROM users WHERE id = " + userId;
-```
-
-### 10.3. 提交粒度
-- 每次提交只做一件事
-- 包含相关 issue 编号
-
-```bash
-git commit -m "$(cat <<'EOF'
-feat: 添加用户登录功能
-
-实现基于 JWT 的用户认证流程
-关联 issue: #123
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-EOF
-)"
-```
+> **代码示例（SQL查询、Git提交格式）**：详见 [references/database-and-git.md](references/database-and-git.md)
 
 ## 12. 代码复杂度约束
 
 | 类型 | 限制 |
 |------|------|
-| 普通类/模块 | ≤ 500 行 |
+| 普通类/模块 | ≤ 350 行 |
 | Controller / Handler | ≤ 100 行 |
 | Service / Service 层 | ≤ 300 行 |
-| 单文件 | ≤ 800 行 |
+| 单文件 | ≤ 350 行 |
 | 方法/函数行数 | ≤ 20 行 |
 | 方法圈复杂度 | ≤ 10 |
+
+### 12.1. 策略模式替代多重 if 判断
+
+> **强制要求**：当代码中存在多个 `if` 分支使用**相等判断**（如 `if (type == "A")`、`if (status === 1)`）时，必须使用**策略模式**替代。
+
+**核心原则**：
+- 相等判断的多分支 if-else 会增加代码复杂度，降低可维护性
+- 策略模式将每个分支逻辑封装为独立的策略类，符合单一职责原则
+- 新增分支时只需添加新策略类，无需修改原有代码（开闭原则）
+
+> **代码示例（正确/错误示例、适用场景判断表、实现方式表）**：详见 [references/strategy-pattern.md](references/strategy-pattern.md)
 
 ## 13. 代码审查清单
 
@@ -1033,10 +317,19 @@ EOF
 
 - [✅/❌/不适用] **方法行数**：每个方法不超过 **20 行**
 - [✅/❌/不适用] **方法职责单一**：每个方法只能做一件事，如果涉及多件事必须拆分为多个独立方法
-- [✅/❌/不适用] **类行数限制**：每个类不超过 **300 行**，超过必须拆分
+- [✅/❌/不适用] **类行数限制**：每个类不超过 **350 行**，超过必须拆分
+- [✅/❌/不适用] **文件行数限制**：单文件不超过 **350 行**，超过必须拆分
 - [✅/❌/不适用] **命名规范**：变量和方法命名符合 camelCase，常量使用 UPPER_SNAKE_CASE
 - [✅/❌/不适用] **无硬编码**：无硬编码值（密码、密钥、令牌、魔法数字）
 - [✅/❌/不适用] **布尔命名**：布尔变量使用 `is`、`has`、`can`、`should` 前缀
+- [✅/❌/不适用] **策略模式**：存在 **4+ 个** if 相等判断分支时，必须使用策略模式替代
+- [✅/❌/不适用] **空值处理**：禁止直接返回 `null`，必须使用 `Optional`/`T | undefined`/`T | None` 等空值安全机制
+- [✅/❌/不适用] **参数数量**：函数参数 ≤ 3 个直接传参，4-5 个使用配置对象，6+ 个必须重构
+- [✅/❌/不适用] **代码重复**：相同代码块 ≥ 3 处必须提取公共方法，相似代码 ≥ 2 处应考虑提取
+- [✅/❌/不适用] **魔法数字**：禁止直接使用魔法数字/字符串，必须定义为常量或枚举
+- [✅/❌/不适用] **集合容量**：创建集合时指定合理的初始容量，避免多次扩容
+- [✅/❌/不适用] **字符串拼接**：循环内禁止使用 `+` 拼接，使用 StringBuilder/join 等方法
+- [✅/❌/不适用] **equals/hashCode**：重写 equals 必须同时重写 hashCode，保持契约一致
 
 ### 13.3. 批量处理（强制）
 
@@ -1101,7 +394,20 @@ EOF
 
 ### 13.2 代码质量
 - [✅/❌/不适用] 方法行数：具体说明
-...（逐项列出）
+- [✅/❌/不适用] 方法职责单一：具体说明
+- [✅/❌/不适用] 类行数限制：具体说明（不超过 350 行）
+- [✅/❌/不适用] 文件行数限制：具体说明（不超过 350 行）
+- [✅/❌/不适用] 命名规范：具体说明
+- [✅/❌/不适用] 无硬编码：具体说明
+- [✅/❌/不适用] 布尔命名：具体说明
+- [✅/❌/不适用] 策略模式：具体说明（4+ 个 if 相等判断分支是否使用策略模式）
+- [✅/❌/不适用] 空值处理：具体说明（是否使用空值安全机制）
+- [✅/❌/不适用] 参数数量：具体说明（参数是否超过限制）
+- [✅/❌/不适用] 代码重复：具体说明（是否有重复代码未提取）
+- [✅/❌/不适用] 魔法数字：具体说明（是否有魔法数字未定义常量）
+- [✅/❌/不适用] 集合容量：具体说明（是否指定初始容量）
+- [✅/❌/不适用] 字符串拼接：具体说明（循环内是否正确拼接）
+- [✅/❌/不适用] equals/hashCode：具体说明（是否同时重写）
 
 ### 13.9 if-else 强制配对
 - [✅/❌/不适用] else 强制：具体说明
