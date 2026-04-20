@@ -1,0 +1,46 @@
+# Kubernetes 集群架构模板
+name: kubernetes
+type: deployment
+description: Kubernetes 集群架构模板，包含 Master 节点、Worker 节点、Pod 和 Service
+
+structure:
+  components:
+    - id: comp-001
+      name: Master Node
+      type: server
+    - id: comp-002
+      name: Worker Node 1
+      type: server
+    - id: comp-003
+      name: Worker Node 2
+      type: server
+    - id: comp-004
+      name: Pod - Application
+      type: service
+    - id: comp-005
+      name: Service - LoadBalancer
+      type: gateway
+  connections:
+    - sourceId: comp-001
+      targetId: comp-002
+      type: sync
+    - sourceId: comp-001
+      targetId: comp-003
+      type: sync
+    - sourceId: comp-002
+      targetId: comp-004
+      type: dataflow
+    - sourceId: comp-005
+      targetId: comp-004
+      type: dataflow
+
+placeholders:
+  - name: cluster_name
+    description: Kubernetes 集群名称
+    default: k8s-cluster
+  - name: worker_count
+    description: Worker 节点数量
+    default: 2
+
+# Author: lvdaxianerplus
+# Date: 2026-04-20

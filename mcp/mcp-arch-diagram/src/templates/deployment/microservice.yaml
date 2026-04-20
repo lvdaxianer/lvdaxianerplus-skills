@@ -1,0 +1,49 @@
+# 微服务架构模板
+name: microservice
+type: deployment
+description: 微服务架构模板，包含服务网关、服务注册中心、多个微服务组件
+
+structure:
+  components:
+    - id: comp-001
+      name: API Gateway
+      type: gateway
+    - id: comp-002
+      name: Service Registry
+      type: service
+    - id: comp-003
+      name: User Service
+      type: service
+    - id: comp-004
+      name: Order Service
+      type: service
+    - id: comp-005
+      name: Payment Service
+      type: service
+  connections:
+    - sourceId: comp-001
+      targetId: comp-003
+      type: dataflow
+    - sourceId: comp-001
+      targetId: comp-004
+      type: dataflow
+    - sourceId: comp-003
+      targetId: comp-002
+      type: sync
+    - sourceId: comp-004
+      targetId: comp-002
+      type: sync
+    - sourceId: comp-004
+      targetId: comp-005
+      type: dataflow
+
+placeholders:
+  - name: gateway_name
+    description: API Gateway 名称
+    default: API Gateway
+  - name: service_count
+    description: 微服务数量
+    default: 3
+
+# Author: lvdaxianerplus
+# Date: 2026-04-20

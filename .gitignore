@@ -27,3 +27,14 @@ backups
 data
 .ai
 .playwright-mcp
+
+# MCP Arch Diagram 生成器输出目录
+mcp/mcp-arch-diagram/diagrams/
+mcp/mcp-arch-diagram/diagrams/*.png
+mcp/mcp-arch-diagram/diagrams/*.d2
+mcp/mcp-arch-diagram/diagrams/*.mmd
+mcp/mcp-arch-diagram/diagrams/metadata.json
+mcp/mcp-arch-diagram/test-output-temp/
+mcp/mcp-arch-diagram/custom-output/
+mcp/mcp-arch-diagram/node_modules/
+mcp/mcp-arch-diagram/dist/

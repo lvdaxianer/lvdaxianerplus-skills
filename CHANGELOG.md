@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- initialize speckit workflow for mcp-arch-diagram (fbf89b0)
+
+- 更新渲染方案为 Puppeteer 内置渲染 (f2b2105)
+
+### Changed
+- 添加 mcp-arch-diagram 设计文档 (e7cead4)
+
+- 更新变更日志 (d50c8cb)
+
+### Changed
 - 清理临时文件和更新配置 (91cc2d3)
 
 - 更新依赖和配置文件 (fb7d274)
