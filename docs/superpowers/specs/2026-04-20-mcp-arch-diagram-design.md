@@ -55,7 +55,7 @@
 |------|------|------|
 | **MCP 协议** | TypeScript + @modelcontextprotocol/sdk | 与 Claude Code 集成标准 |
 | **渲染引擎** | D2（主） + Mermaid（辅） | D2 语法简洁，专为架构图设计；Mermaid 兼容 Markdown |
-| **图片导出** | D2 CLI + Puppeteer | D2 原生支持 PNG/SVG 导出；Mermaid 通过 Puppeteer 渲染 |
+| **图片导出** | Puppeteer 内置渲染 | 无需安装外部工具，随 npm 包自动部署 |
 | **存储** | 本地文件系统 | 简单可靠，用户可控 |
 
 ### 3.2 系统架构
@@ -105,9 +105,9 @@
 
 #### 3.3.3 渲染层
 
-- **d2-engine.ts** — D2 代码生成和渲染调用
-- **mermaid-engine.ts** — Mermaid 代码生成和渲染调用
-- **exporter.ts** — 图片导出，调用 CLI 或 Puppeteer
+- **d2-engine.ts** — D2 代码生成和 Puppeteer 渲染
+- **mermaid-engine.ts** — Mermaid 代码生成和 Puppeteer 渲染
+- **exporter.ts** — 图片导出，通过 Puppeteer 转换为 PNG/SVG
 - **code-gen.ts** — D2/Mermaid 代码生成器
 
 #### 3.3.4 存储层
@@ -304,15 +304,19 @@ mcp-arch-diagram/
 | 包名 | 版本 | 用途 |
 |------|------|------|
 | @modelcontextprotocol/sdk | ^1.0.0 | MCP 协议实现 |
+| puppeteer | ^22.0.0 | 图片渲染（D2/Mermaid 转 PNG/SVG） |
+| mermaid | ^10.0.0 | Mermaid 渲染引擎 |
 | yaml | ^2.3.0 | 配置文件解析 |
 | uuid | ^9.0.0 | 生成唯一 ID |
 
 ### 6.2 外部工具依赖
 
-| 工具 | 用途 | 安装方式 |
-|------|------|----------|
-| D2 CLI | D2 渲染 | `brew install d2` 或 `go install` |
-| Puppeteer | Mermaid 渲染 | npm 安装，随项目部署 |
+**无外部工具依赖** — 所有渲染引擎通过 npm 包内置，随项目自动部署。
+
+| 渲染方式 | 实现方案 |
+|----------|----------|
+| D2 渲染 | @terrastruct/d2-vsvg + Puppeteer 转 PNG/SVG |
+| Mermaid 渲染 | mermaid.js + Puppeteer 转 PNG/SVG |
 
 ### 6.3 开发依赖
 
@@ -411,7 +415,7 @@ logging:
 
 | 风险 | 影响 | 应对措施 |
 |------|------|----------|
-| D2 CLI 未安装 | 无法渲染图片 | 启动时检查，提示安装；降级返回代码文件 |
+| Puppeteer 首次启动慢 | 图片生成延迟 | 预热 Chromium 实例；缓存渲染结果 |
 | 自然语言解析不准确 | 架构图不符合预期 | 提供模板选择兜底；支持用户修正 |
 | 图片导出失败 | 无法生成 PNG | 返回代码文件作为备选；记录错误日志 |
 
