@@ -21,12 +21,19 @@ node_modules
 dist
 target
 logs
-# specs and .specify are now tracked for speckit workflow
-# .superpowers brainstorming artifacts tracked for design history
 backups
 data
+
+# MCP 和工具相关（不应提交）
 .ai
 .playwright-mcp
+.specify
+.superpowers
+.mcp.json
+
+# 规范和文档目录（项目特定）
+specs/
+docs/
 test*
 
 # MCP Arch Diagram 生成器输出目录
