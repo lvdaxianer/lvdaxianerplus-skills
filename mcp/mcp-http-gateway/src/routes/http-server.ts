@@ -52,6 +52,8 @@ import { getConfigRoutes, setConfigPath } from './handlers/config.handler.js';
 import { getAlertsRoutes } from './handlers/alerts.handler.js';
 import { getAuditRoutes } from './handlers/audit.handler.js';
 import { getDashboardRoutes } from './handlers/dashboard.handler.js';
+import { getFallbackConditionsRoutes } from './handlers/fallback-conditions.handler.js';
+import { getToolCacheRoutes, loadToolCacheConfigs } from './handlers/tool-cache.handler.js';
 
 /**
  * HTTP 服务器配置选项
@@ -86,6 +88,11 @@ function registerAllRoutes(router: RouterStrategyTable, config: Config): void {
   router.registerAll(getConfigRoutes(config));
   router.registerAll(getAlertsRoutes());
   router.registerAll(getAuditRoutes());
+  router.registerAll(getFallbackConditionsRoutes());
+  router.registerAll(getToolCacheRoutes());
+
+  // 加载工具缓存配置
+  loadToolCacheConfigs();
 
   logger.info('[HTTP服务] 已注册路由', {
     count: router.getRoutes().length,

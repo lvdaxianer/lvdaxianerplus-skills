@@ -91,15 +91,18 @@
       <div class="logs-list" style="display:flex;flex-direction:column;gap:8px;">
         <% (data.logs || []).slice(0, 15).forEach(function(l) { %>
         <%
-          // 条件：将时间格式化为 24 小时制（HH:mm:ss）
+          // 条件：将时间格式化为年月日时分秒（YYYY-MM-DD HH:mm:ss）
           const logDate = new Date(l.timestamp);
+          const year = logDate.getFullYear();
+          const month = String(logDate.getMonth() + 1).padStart(2, '0');
+          const day = String(logDate.getDate()).padStart(2, '0');
           const hours = String(logDate.getHours()).padStart(2, '0');
           const minutes = String(logDate.getMinutes()).padStart(2, '0');
           const seconds = String(logDate.getSeconds()).padStart(2, '0');
-          const timeStr = hours + ':' + minutes + ':' + seconds;
+          const timeStr = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
         %>
         <div class="log-item" style="display:flex;align-items:center;gap:12px;padding:8px 12px;background:#F8FAFC;border-radius:8px;">
-          <span class="log-time" style="min-width:80px;color:#64748B;"><%= timeStr %></span>
+          <span class="log-time" style="min-width:160px;color:#64748B;"><%= timeStr %></span>
           <span style="min-width:100px;font-weight:600;color:#334155;"><%= l.tool_name %></span>
           <span style="min-width:60px;padding:2px 8px;border-radius:4px;background:<%= l.method === 'GET' ? '#DBEAFE' : l.method === 'POST' ? '#FEF3C7' : '#E5E7EB' %>;color:<%= l.method === 'GET' ? '#1D4ED8' : l.method === 'POST' ? '#B45309' : '#374151' %>;font-size:12px;font-weight:500;"><%= l.method || '-' %></span>
           <span style="flex:1;color:#64748B;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= l.url || l.message || '-' %></span>

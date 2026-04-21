@@ -107,9 +107,19 @@ export function getCachedResponse(
   }
 
   // TTL (Time-To-Live) check: verify entry hasn't expired
+  // Important: TTL = 0 or Infinity means never expire (for fallback scenarios)
   // Calculate elapsed time since cache entry was stored
   // If elapsed time exceeds configured TTL, entry is considered stale
   const elapsed = Date.now() - entry.timestamp;
+
+  // 条件注释：TTL 为 0 或 Infinity 时永不过期（用于降级场景）
+  // This prevents cache deletion for fallback purposes
+  if (cacheConfig.ttl === 0 || cacheConfig.ttl === Infinity) {
+    // Cache hit: return the stored data (never expires)
+    return entry.data;
+  }
+
+  // 条件注释：TTL 大于 0 时检查过期时间
   if (elapsed > cacheConfig.ttl) {
     // Entry expired: delete from cache and return undefined
     // This prevents returning stale data to callers
@@ -156,9 +166,16 @@ export function cacheResponse(
     initCache(config);
   }
 
-  // Early return if cache is disabled or not initialized
+  // Early return if cache is not initialized
   // This prevents storing data when caching is not configured
-  if (!cache || !cacheConfig?.enabled) {
+  if (!cache) {
+    return;
+  }
+
+  // Check if caching is enabled:
+  // 条件注释：传入的 config 存在时使用传入的 enabled，不存在时使用全局 cacheConfig
+  const isEnabled = config?.enabled ?? cacheConfig?.enabled ?? false;
+  if (!isEnabled) {
     return;
   }
 

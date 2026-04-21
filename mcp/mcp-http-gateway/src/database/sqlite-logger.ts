@@ -40,6 +40,26 @@ interface PendingRequest {
   dateKey: string;
 }
 
+/**
+ * 获取本地时区的日期键（YYYY-MM-DD 格式）
+ *
+ * 使用本地时区而非 UTC，确保 Dashboard 显示的日期与数据库存储一致。
+ * 例如：中国时区 UTC+8，UTC 时间 21:00 对应本地时间次日 05:00。
+ *
+ * @param date - 日期对象（默认当前时间）
+ * @returns 本地日期键字符串
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-22
+ */
+function getLocalDateKey(date: Date = new Date()): string {
+  // 使用本地时区的年月日
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // Batch write buffer
 interface RequestLogEntry {
   timestamp: string;
@@ -155,7 +175,7 @@ export function logRequestToSqlite(
 ): RequestId {
   const now = new Date();
   const timestamp = now.toISOString();
-  const dateKey = timestamp.split('T')[0];
+  const dateKey = getLocalDateKey(now);  // 使用本地时区日期
 
   // 生成唯一请求 ID
   const requestId = generateRequestId(toolName, timestamp);
@@ -233,7 +253,7 @@ export function logResponseToSqlite(
     // 未找到待处理请求（可能是遗留响应），单独写入
     const now = new Date();
     const timestamp = now.toISOString();
-    const dateKey = timestamp.split('T')[0];
+    const dateKey = getLocalDateKey(now);  // 使用本地时区日期
 
     const entry: RequestLogEntry = {
       timestamp,
@@ -292,7 +312,7 @@ export function logErrorToSqlite(
 
   const now = new Date();
   const timestamp = pendingRequest?.timestamp ?? now.toISOString();
-  const dateKey = pendingRequest?.dateKey ?? timestamp.split('T')[0];
+  const dateKey = pendingRequest?.dateKey ?? getLocalDateKey(now);  // 使用本地时区日期
 
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorStack = error instanceof Error ? error.stack : undefined;
@@ -1206,7 +1226,7 @@ export function getDurationPercentiles(
     return { p50: 0, p75: 0, p90: 0, p95: 0, p99: 0, min: 0, max: 0, avg: 0, count: 0 };
   }
 
-  const dateKey = date ?? new Date().toISOString().split('T')[0];
+  const dateKey = date ?? getLocalDateKey();  // 使用本地时区日期
 
   // Query durations
   let query = `
@@ -1262,7 +1282,7 @@ export function getTodayStats(): {
   tool_stats: Record<string, { requests: number; successes: number; errors: number; avgDuration: number }>;
 } {
   const db = getDatabase();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateKey();  // 使用本地时区日期
 
   // 条件注释：数据库不可用返回默认值，可用时查询今日统计
   if (!db) {
@@ -1338,7 +1358,7 @@ export interface TrendDataPoint {
  * Get trend data for the past N days
  *
  * @param days - Number of days to retrieve (default 7)
- * @returns Array of daily trend data
+ * @returns Array of daily trend data (fills empty dates with 0 values)
  *
  * @author lvdaxianerplus
  * @date 2026-04-19
@@ -1354,8 +1374,9 @@ export function getTrendData(days: number = 7): TrendDataPoint[] {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days + 1);
 
-  const startDateKey = startDate.toISOString().split('T')[0];
-  const endDateKey = endDate.toISOString().split('T')[0];
+  // 使用本地时区日期（而非 UTC）
+  const startDateKey = getLocalDateKey(startDate);
+  const endDateKey = getLocalDateKey(endDate);
 
   const rows = db.prepare(`
     SELECT date_key, total_requests, total_successes, total_errors, avg_duration
@@ -1370,13 +1391,39 @@ export function getTrendData(days: number = 7): TrendDataPoint[] {
     avg_duration: number;
   }>;
 
-  return rows.map(row => ({
-    date: row.date_key,
-    requests: row.total_requests,
-    successes: row.total_successes,
-    errors: row.total_errors,
-    avgDuration: Math.round(row.avg_duration),
-  }));
+  // Create a map of existing data
+  const dataMap = new Map<string, TrendDataPoint>();
+  for (const row of rows) {
+    dataMap.set(row.date_key, {
+      date: row.date_key,
+      requests: row.total_requests,
+      successes: row.total_successes,
+      errors: row.total_errors,
+      avgDuration: Math.round(row.avg_duration),
+    });
+  }
+
+  // Fill all dates in the range (even if no data)
+  const result: TrendDataPoint[] = [];
+  const current = new Date(startDate);
+  while (current <= endDate) {
+    const dateKey = getLocalDateKey(current);  // 使用本地时区日期
+    // 条件注释：日期有数据时使用实际数据，无数据时填充0值
+    if (dataMap.has(dateKey)) {
+      result.push(dataMap.get(dateKey)!);
+    } else {
+      result.push({
+        date: dateKey,
+        requests: 0,
+        successes: 0,
+        errors: 0,
+        avgDuration: 0,
+      });
+    }
+    current.setDate(current.getDate() + 1);
+  }
+
+  return result;
 }
 
 /**
@@ -1410,7 +1457,7 @@ export function getTopNToolsByRequests(limit: number = 10, date?: string): TopNT
     return [];
   }
 
-  const dateKey = date ?? new Date().toISOString().split('T')[0];
+  const dateKey = date ?? getLocalDateKey();  // 使用本地时区日期
 
   const rows = db.prepare(`
     SELECT tool_name, COUNT(*) as requests,
@@ -1454,7 +1501,7 @@ export function getTopNToolsByErrors(limit: number = 10, date?: string): TopNToo
     return [];
   }
 
-  const dateKey = date ?? new Date().toISOString().split('T')[0];
+  const dateKey = date ?? getLocalDateKey();  // 使用本地时区日期
 
   const rows = db.prepare(`
     SELECT tool_name, COUNT(*) as requests,
@@ -1498,7 +1545,7 @@ export function getTopNToolsByDuration(limit: number = 10, date?: string): TopNT
     return [];
   }
 
-  const dateKey = date ?? new Date().toISOString().split('T')[0];
+  const dateKey = date ?? getLocalDateKey();  // 使用本地时区日期
 
   const rows = db.prepare(`
     SELECT tool_name, COUNT(*) as requests,

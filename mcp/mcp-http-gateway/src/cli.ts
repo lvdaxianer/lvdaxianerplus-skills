@@ -21,6 +21,7 @@ import { initDatabase, closeDatabase, cleanOldRecords, getDefaultDbPath } from '
 import { initSqliteLogger, stopSqliteLogger } from './database/sqlite-logger.js';
 import { initAlertLogger } from './database/alert-logger.js';
 import { initMockHandler } from './features/mock.js';
+import { loadToolCacheConfigs } from './routes/handlers/tool-cache.handler.js';
 
 interface CliArgs {
   configPath: string;
@@ -107,6 +108,9 @@ async function main(): Promise<void> {
     const maxDays = sqliteConfig.maxDays;
     cleanOldRecords(maxDays);
     logger.info('[启动] SQLite logging enabled', { dbPath: sqliteConfig.dbPath, source: cliArgs.sqlitePath ? 'CLI' : config.sqlite?.dbPath ? 'config' : 'default' });
+
+    // 加载工具级缓存配置
+    loadToolCacheConfigs();
   } else {
     // SQLite 日志禁用：跳过初始化
     logger.info('[启动] SQLite logging disabled by config');
@@ -126,11 +130,12 @@ async function main(): Promise<void> {
   logger.info('[启动] Loaded tools', { count: Object.keys(config.tools).length });
 
   // Start HTTP server for health checks and dashboard (默认启用)
-  // 条件：指标监控和健康检查默认启用，除非配置文件明确禁用
-  // 优先级：配置文件 disabled > 默认启用
+  // 条件：HTTP 服务默认启用，除非配置文件明确禁用 metrics 和 healthCheck
+  // 优先级：--http 参数 > 配置文件禁用 > 默认启用
   const metricsDisabled = config.metrics?.enabled === false;
   const healthCheckDisabled = config.healthCheck?.enabled === false;
-  const shouldStartHttpServer = !metricsDisabled && !healthCheckDisabled || cliArgs.httpEnabled;
+  // 使用括号明确优先级：--http 参数或（配置未禁用）就启用
+  const shouldStartHttpServer = cliArgs.httpEnabled || (!(metricsDisabled || healthCheckDisabled));
 
   if (shouldStartHttpServer) {
     await startHttpServer({ config, port: cliArgs.httpPort, configPath: cliArgs.configPath });

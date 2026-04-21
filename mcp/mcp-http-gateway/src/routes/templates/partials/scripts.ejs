@@ -110,7 +110,7 @@
       btn.classList.add('active');
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById('page-' + btn.dataset.page).classList.add('active');
-      if (btn.dataset.page === 'tools') loadTools();
+      if (btn.dataset.page === 'tools') { loadTools(); loadFallbackConditions(); }
       if (btn.dataset.page === 'stats') loadStatsPage();
       if (btn.dataset.page === 'alerts') loadAlerts();
       if (btn.dataset.page === 'logs') { searchLogs(); }
@@ -133,20 +133,118 @@
     toggleBtn.textContent = globalMockEnabled ? 'Mock 已开启' : 'Mock 已关闭';
     toggleBtn.className = globalMockEnabled ? 'btn btn-success' : 'btn btn-secondary';
 
+    // 获取工具缓存配置
+    const cacheData = await api('/api/cache/tools');
+    const cacheConfigs = cacheData.configs || {};
+
     const tbody = document.getElementById('tools-body');
     tbody.innerHTML = data.tools.map(t => {
-      const isOn = t.mockEnabled;
+      const mockOn = t.mockEnabled;
+      const cacheOn = cacheConfigs[t.name]?.enabled ?? false;
       return '<tr>' +
         '<td><div style="display:flex;flex-direction:column;gap:2px;"><strong>' + t.name + '</strong><span style="font-size:12px;color:var(--text-muted);max-width:300px;overflow:hidden;text-overflow:ellipsis;">' + (t.description || '') + '</span></div></td>' +
         '<td>' + t.method + '</td>' +
         '<td style="color: var(--text-muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis;">' + t.path + '</td>' +
-        '<td><span class="badge ' + (isOn ? 'badge-on' : 'badge-off') + '">' + (isOn ? '开启' : '关闭') + '</span></td>' +
+        '<td><button class="btn btn-sm ' + (cacheOn ? 'btn-success' : 'btn-secondary') + '" onclick="toggleCache(\'' + t.name + '\')">' + (cacheOn ? '已缓存' : '缓存') + '</button></td>' +
+        '<td><span class="badge ' + (mockOn ? 'badge-on' : 'badge-off') + '">' + (mockOn ? '开启' : '关闭') + '</span></td>' +
         '<td>' +
-          '<button class="btn btn-sm ' + (isOn ? 'btn-danger' : 'btn-success') + '" onclick="toggleMock(\'' + t.name + '\')">' + (isOn ? '关闭' : '开启') + '</button> ' +
+          '<button class="btn btn-sm ' + (mockOn ? 'btn-danger' : 'btn-success') + '" onclick="toggleMock(\'' + t.name + '\')">' + (mockOn ? '关闭' : '开启') + '</button> ' +
           '<button class="btn btn-sm btn-primary" onclick="openModal(\'' + t.name + '\')">配置</button>' +
         '</td>' +
       '</tr>';
     }).join('');
+  }
+
+  // Toggle single tool cache
+  async function toggleCache(name) {
+    const cacheData = await api('/api/cache/tools');
+    const currentEnabled = cacheData.configs?.[name]?.enabled ?? false;
+    await api('/api/cache/tools/' + name, 'PUT', { enabled: !currentEnabled });
+    loadTools();
+    showToast('缓存配置已更新', 'success');
+  }
+
+  // ===== 降级条件模板功能 =====
+  let fallbackConditionsData = { enabled: false, conditions: [] };
+
+  // 加载降级条件配置
+  async function loadFallbackConditions() {
+    try {
+      const data = await api('/api/fallback/conditions');
+      fallbackConditionsData = {
+        enabled: data.enabled ?? false,
+        conditions: data.conditions ?? []
+      };
+      document.getElementById('fallback-conditions-enabled').checked = fallbackConditionsData.enabled;
+      renderFallbackConditionsList();
+    } catch (e) {
+      console.error('加载降级条件失败:', e);
+      showToast('加载降级条件失败', 'error');
+    }
+  }
+
+  // 渲染降级条件列表
+  function renderFallbackConditionsList() {
+    const container = document.getElementById('fallback-conditions-list');
+    // 条件注释：无条件时显示空提示
+    if (fallbackConditionsData.conditions.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;">暂无降级条件，点击"添加条件"配置</div>';
+    } else {
+      container.innerHTML = fallbackConditionsData.conditions.map((c, i) => {
+        return '<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--card-bg);border-radius:6px;margin-bottom:8px;">' +
+          '<input type="text" style="flex:1;padding:6px;border:1px solid var(--border);border-radius:4px;" placeholder="表达式 $.data" value="' + (c.expression || '') + '" onchange="updateCondition(' + i + ', \'expression\', this.value)">' +
+          '<select style="padding:6px;border:1px solid var(--border);border-radius:4px;" onchange="updateCondition(' + i + ', \'operator\', this.value)">' +
+            '<option value="==" ' + (c.operator === '==' ? 'selected' : '') + '>==</option>' +
+            '<option value="!=" ' + (c.operator === '!=' ? 'selected' : '') + '>!=</option>' +
+            '<option value=">" ' + (c.operator === '>' ? 'selected' : '') + '>></option>' +
+            '<option value="<" ' + (c.operator === '<' ? 'selected' : '') + '><</option>' +
+            '<option value="empty" ' + (c.operator === 'empty' ? 'selected' : '') + '>empty</option>' +
+            '<option value="not_empty" ' + (c.operator === 'not_empty' ? 'selected' : '') + '>not_empty</option>' +
+          '</select>' +
+          '<input type="text" style="width:80px;padding:6px;border:1px solid var(--border);border-radius:4px;" placeholder="值" value="' + (c.value ?? '') + '" onchange="updateCondition(' + i + ', \'value\', this.value)">' +
+          '<button class="btn btn-sm btn-danger" onclick="removeCondition(' + i + ')">删除</button>' +
+        '</div>';
+      }).join('');
+    }
+  }
+
+  // 添加降级条件
+  function addFallbackCondition() {
+    fallbackConditionsData.conditions.push({
+      expression: '$.data',
+      operator: '==',
+      value: false,
+      description: ''
+    });
+    renderFallbackConditionsList();
+  }
+
+  // 更新降级条件
+  function updateCondition(index, field, value) {
+    fallbackConditionsData.conditions[index][field] = value;
+  }
+
+  // 删除降级条件
+  function removeCondition(index) {
+    fallbackConditionsData.conditions.splice(index, 1);
+    renderFallbackConditionsList();
+  }
+
+  // 切换降级条件启用状态
+  function toggleFallbackConditions() {
+    fallbackConditionsData.enabled = document.getElementById('fallback-conditions-enabled').checked;
+  }
+
+  // 保存降级条件配置
+  async function saveFallbackConditions() {
+    try {
+      await api('/api/fallback/conditions', 'PUT', fallbackConditionsData);
+      showToast('降级条件配置已保存', 'success');
+      loadFallbackConditions();
+    } catch (e) {
+      console.error('保存降级条件失败:', e);
+      showToast('保存降级条件失败', 'error');
+    }
   }
 
   // Global mock toggle
@@ -297,14 +395,45 @@
       }
       let html = '';
       entries.forEach(e => {
+        // 条件注释：显示完整的缓存数据信息
         html += '<div style="border-bottom:1px solid #E2E8F0;padding:12px 0;">';
+        // 工具名称和删除按钮
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
         html += '<div style="font-weight:600;color:#3B82F6;">' + e.toolName + '</div>';
         html += '<button class="btn btn-sm btn-danger" onclick="clearCacheByToolName(\'' + e.toolName + '\')">删除</button>';
+        html += '</div>';
+        // 缓存时间信息
+        html += '<div style="font-size:12px;color:#64748B;margin-bottom:8px;">';
+        html += '缓存时间: ' + new Date(e.timestamp).toLocaleString() + ' | 存续: ' + Math.round(e.age / 1000) + '秒';
+        html += '</div>';
+        // 参数信息（如果有）
+        if (e.args && e.args !== '{}') {
+          html += '<div style="font-size:12px;color:#64748B;margin-bottom:8px;">';
+          html += '参数: <code style="background:#F1F5F9;padding:2px 4px;border-radius:4px;">' + e.args + '</code>';
+          html += '</div>';
+        }
+        // 缓存数据预览（折叠）
+        html += '<div style="margin-top:8px;">';
+        html += '<button class="btn btn-sm btn-secondary" onclick="toggleCacheData(this)" style="font-size:12px;">展开数据</button>';
+        html += '<pre style="display:none;margin-top:8px;padding:8px;background:#F1F5F9;border-radius:8px;font-size:12px;max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-all;">' + JSON.stringify(e.data, null, 2) + '</pre>';
+        html += '</div>';
         html += '</div>';
       });
       body.innerHTML = html;
     } catch (err) {
       body.innerHTML = '<p style="text-align:center;color:#EF4444;">加载失败</p>';
+    }
+  }
+
+  // 切换缓存数据展开/折叠
+  function toggleCacheData(btn) {
+    const pre = btn.nextElementSibling;
+    if (pre.style.display === 'none') {
+      pre.style.display = 'block';
+      btn.textContent = '收起数据';
+    } else {
+      pre.style.display = 'none';
+      btn.textContent = '展开数据';
     }
   }
 

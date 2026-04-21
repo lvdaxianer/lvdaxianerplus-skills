@@ -24,6 +24,8 @@ import type { HttpClient, HttpResponse } from '../utils/http-client.js';
 import { createHttpClient } from '../utils/http-client.js';
 import { logger } from '../middleware/logger.js';
 import { isMockEnabled, executeMockCall, canUseMockAsFallback, executeMockFallback, getGlobalMockEnabled } from '../features/mock.js';
+import { evaluateFallbackConditions } from '../utils/fallback-evaluator.js';
+import { isToolCacheEnabled, getToolCacheTtl } from '../routes/handlers/tool-cache.handler.js';
 import {
   alertCircuitBreakerOpen,
   alertCircuitBreakerHalfOpen,
@@ -217,6 +219,17 @@ export async function executeTool(context: ExecuteContext): Promise<ExecuteResul
         mockResult.duration,
         undefined
       );
+    }
+
+    // Cache mock response (check tool-level cache config first)
+    // 条件注释：Mock 响应成功时也支持工具级缓存
+    const toolCacheEnabled = isToolCacheEnabled(toolName);
+    if (toolCacheEnabled && mockResult.success) {
+      // 条件注释：工具级缓存默认永不过期（TTL = 0），用于降级场景
+      const toolTtl = getToolCacheTtl(toolName) ?? 0;
+      const cacheConfig = { enabled: true, ttl: toolTtl, maxSize: config.cache?.maxSize ?? 1000 };
+      cacheResponse(toolName, args, mockResult.data, cacheConfig);
+      logger.info(`[${toolName}] Mock 响应已缓存`, { ttl: toolTtl === 0 ? '永不过期' : toolTtl });
     }
 
     return {
@@ -426,20 +439,50 @@ export async function executeTool(context: ExecuteContext): Promise<ExecuteResul
     responseData = transformResponse(responseData, tool.responseTransform);
   }
 
-  // Cache response (only for GET and success)
+  // Cache response (check tool-level cache config first)
   // Key insight: Cache GET data is for quick fallback usage, NOT for query acceleration
-  if (tool.method === 'GET' && config.cache?.enabled && response.status >= 200 && response.status < 300) {
+  // 条件注释：工具级缓存启用时使用工具配置，否则使用全局 GET 缓存配置
+  const toolCacheEnabled = isToolCacheEnabled(toolName);
+  logger.info(`[${toolName}] 缓存检查`, { toolCacheEnabled, toolMethod: tool.method });
+  // 条件注释：工具级缓存启用时缓存响应
+  if (toolCacheEnabled) {
+    // 条件注释：工具级缓存默认永不过期（TTL = 0），用于降级场景
+    // 工具级缓存主要用于降级，不应该过期
+    const toolTtl = getToolCacheTtl(toolName) ?? 0; // 默认 TTL = 0 表示永不过期
+    const cacheConfig = { enabled: true, ttl: toolTtl, maxSize: config.cache?.maxSize ?? 1000 };
+    logger.info(`[${toolName}] 正在缓存响应`, { ttl: toolTtl === 0 ? '永不过期' : toolTtl, maxSize: cacheConfig.maxSize });
+    cacheResponse(toolName, args, responseData, cacheConfig);
+    logger.info(`[${toolName}] 响应已缓存`);
+  } else if (tool.method === 'GET' && config.cache?.enabled && response.status >= 200 && response.status < 300) {
+    // 全局缓存仅对 GET 请求生效
     cacheResponse(toolName, args, responseData, config.cache);
+  } else {
+    // 缓存未启用或非 GET 请求，跳过缓存
+    logger.info(`[${toolName}] 缓存未启用`, { reason: toolCacheEnabled ? 'toolCacheEnabled' : '非GET请求或全局缓存未启用' });
   }
 
   // Return based on status
   // Condition: success status codes (2xx)
   if (response.status >= 200 && response.status < 300) {
-    return {
-      success: true,
-      data: responseData,
-      source: 'real',
-    };
+    // ===== 新增：返回值降级判断 =====
+    // 条件注释：检查响应数据是否满足降级条件模板
+    const fallbackEvalResult = evaluateFallbackConditions(responseData);
+
+    // 条件注释：满足降级条件时触发降级链，而非返回成功
+    if (fallbackEvalResult.shouldFallback) {
+      logger.info(`[${toolName}] 响应满足降级条件，触发回退链`, {
+        reason: fallbackEvalResult.reason,
+        condition: fallbackEvalResult.matchedCondition?.expression
+      });
+      return executeFallbackChain(context, fallbackEvalResult.reason ?? 'response_condition_matched');
+    } else {
+      // 不满足降级条件，正常返回成功响应
+      return {
+        success: true,
+        data: responseData,
+        source: 'real',
+      };
+    }
   } else {
     // Condition: non-success status codes, trigger fallback
     logger.info(`[${toolName}] 服务返回非成功状态码，触发回退链`, { status: response.status });

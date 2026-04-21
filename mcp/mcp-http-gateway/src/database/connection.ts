@@ -198,6 +198,37 @@ function createTables(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_mock_configs_enabled ON mock_configs(enabled);
   `);
 
+  // Fallback conditions table - 持久化降级条件模板
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS fallback_conditions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      conditions_json TEXT NOT NULL,
+      description TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_fallback_conditions_name ON fallback_conditions(name);
+    CREATE INDEX IF NOT EXISTS idx_fallback_conditions_enabled ON fallback_conditions(enabled);
+  `);
+
+  // Tool cache configs table - 持久化工具缓存配置
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS tool_cache_configs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tool_name TEXT NOT NULL UNIQUE,
+      enabled INTEGER NOT NULL DEFAULT 0,
+      ttl INTEGER DEFAULT 60000,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tool_cache_configs_tool ON tool_cache_configs(tool_name);
+    CREATE INDEX IF NOT EXISTS idx_tool_cache_configs_enabled ON tool_cache_configs(enabled);
+  `);
+
   logger.info('[SQLite] Tables created successfully');
 }
 

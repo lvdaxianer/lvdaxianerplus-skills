@@ -42,21 +42,22 @@ export async function alertsHandler(
   const date = getQueryParam(url, 'date');
   const limit = getQueryParamAsNumber(url, 'limit', 100);
 
-  // 条件注释：查询未解决告警、按日期查询或返回摘要
+  // 条件注释：查询未解决告警、按日期查询或返回告警列表
   if (unresolved === 'true') {
+    // 返回未解决的告警列表
     const alerts = getUnresolvedAlerts();
     sendJsonResponse(res, 200, alerts);
     return true;
   } else if (date) {
+    // 返回指定日期的告警列表
     const alerts = getAlertsByDate(date, limit);
     sendJsonResponse(res, 200, alerts);
     return true;
   } else {
-    // Alert summary
-    const startDate = getQueryParam(url, 'startDate') ?? new Date().toISOString().split('T')[0];
-    const endDate = getQueryParam(url, 'endDate') ?? new Date().toISOString().split('T')[0];
-    const summary = getAlertSummary(startDate, endDate);
-    sendJsonResponse(res, 200, summary);
+    // 无特定参数时返回今日告警列表（前端期望数组格式）
+    const today = new Date().toISOString().split('T')[0];
+    const alerts = getAlertsByDate(today, limit);
+    sendJsonResponse(res, 200, alerts);
     return true;
   }
 }
@@ -97,6 +98,28 @@ export async function alertResolveHandler(
 }
 
 /**
+ * 告警摘要处理器
+ *
+ * @param req - HTTP 请求对象
+ * @param res - HTTP 响应对象
+ * @returns 是否处理完成
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-22
+ */
+export async function alertSummaryHandler(
+  req: IncomingMessage,
+  res: ServerResponse
+): Promise<boolean> {
+  const url = new URL(req.url ?? '/', 'http://localhost');
+  const startDate = getQueryParam(url, 'startDate') ?? new Date().toISOString().split('T')[0];
+  const endDate = getQueryParam(url, 'endDate') ?? new Date().toISOString().split('T')[0];
+  const summary = getAlertSummary(startDate, endDate);
+  sendJsonResponse(res, 200, summary);
+  return true;
+}
+
+/**
  * Alerts 路由策略配置
  *
  * @returns 路由策略数组
@@ -113,6 +136,14 @@ export function getAlertsRoutes(): Array<{
   priority: number;
 }> {
   return [
+    {
+      name: 'alerts-summary',
+      path: '/api/alerts/summary',
+      matchType: 'exact',
+      methods: ['GET'],
+      handler: alertSummaryHandler,
+      priority: 69,
+    },
     {
       name: 'alerts',
       path: '/api/alerts',
