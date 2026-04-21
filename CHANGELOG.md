@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
+- 缓存和降级功能改进 (2c96d12)
+
+### Changed
+- 删除 mcp-arch-diagram 模块 (dc23bbd)
+
 - 更新变更日志 (36a59e2)
 
 ### Changed
