@@ -72,13 +72,8 @@ async function main(): Promise<void> {
   }
 
   // Set log level
-  // 条件：配置中指定了日志级别时设置
-  if (config.logging?.level) {
-    setLogLevel(config.logging.level);
-  } else {
-    // 使用默认日志级别 info
-    logger.info('[启动] Using default log level: info');
-  }
+  // 条件：配置中指定了日志级别时设置，否则使用默认级别 info
+  setLogLevel(config.logging?.level ?? 'info');
 
   // Initialize file logging if enabled
   // 条件：文件日志启用时初始化文件日志模块
@@ -90,10 +85,11 @@ async function main(): Promise<void> {
     logger.info('[启动] File logging disabled, skipping initialization');
   }
 
-  // Initialize SQLite database if enabled
-  // 条件：SQLite 日志启用时初始化数据库和告警模块
-  // 优先级：CLI 参数 > 配置文件 > 默认禁用
-  const shouldEnableSqlite = cliArgs.sqliteEnabled || cliArgs.sqlitePath || config.sqlite?.enabled;
+  // Initialize SQLite database (默认启用)
+  // 条件：SQLite 日志默认启用，除非配置文件明确禁用
+  // 优先级：CLI 参数 > 配置文件 enabled: false > 默认启用
+  const sqliteDisabledInConfig = config.sqlite?.enabled === false;
+  const shouldEnableSqlite = cliArgs.sqliteEnabled || cliArgs.sqlitePath || !sqliteDisabledInConfig;
 
   if (shouldEnableSqlite) {
     // 确定 SQLite 配置：CLI 参数优先，其次配置文件，最后默认
@@ -113,7 +109,7 @@ async function main(): Promise<void> {
     logger.info('[启动] SQLite logging enabled', { dbPath: sqliteConfig.dbPath, source: cliArgs.sqlitePath ? 'CLI' : config.sqlite?.dbPath ? 'config' : 'default' });
   } else {
     // SQLite 日志禁用：跳过初始化
-    logger.info('[启动] SQLite logging disabled, skipping initialization');
+    logger.info('[启动] SQLite logging disabled by config');
   }
 
   // Initialize Mock handler
@@ -129,15 +125,20 @@ async function main(): Promise<void> {
   logger.info('[启动] MCP HTTP Gateway starting...');
   logger.info('[启动] Loaded tools', { count: Object.keys(config.tools).length });
 
-  // Start HTTP server for health checks and dashboard
-  // 条件：指标监控、健康检查或 HTTP 参数启用时启动 HTTP 服务器
-  if (config.metrics?.enabled || config.healthCheck?.enabled || cliArgs.httpEnabled) {
+  // Start HTTP server for health checks and dashboard (默认启用)
+  // 条件：指标监控和健康检查默认启用，除非配置文件明确禁用
+  // 优先级：配置文件 disabled > 默认启用
+  const metricsDisabled = config.metrics?.enabled === false;
+  const healthCheckDisabled = config.healthCheck?.enabled === false;
+  const shouldStartHttpServer = !metricsDisabled && !healthCheckDisabled || cliArgs.httpEnabled;
+
+  if (shouldStartHttpServer) {
     await startHttpServer({ config, port: cliArgs.httpPort, configPath: cliArgs.configPath });
     logger.info('[启动] Dashboard available', { url: `http://localhost:${cliArgs.httpPort}/dashboard` });
     logger.info('[启动] Health check available', { url: `http://localhost:${cliArgs.httpPort}/health` });
   } else {
     // HTTP 服务禁用：跳过启动
-    logger.info('[启动] HTTP server disabled, skipping initialization');
+    logger.info('[启动] HTTP server disabled by config');
   }
 
   // Start config hot reload if enabled

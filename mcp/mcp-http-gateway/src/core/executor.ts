@@ -37,6 +37,7 @@ import {
   logResponseToSqlite,
   logErrorToSqlite,
   flushBuffers,
+  type RequestId,
 } from '../database/sqlite-logger.js';
 
 /**
@@ -303,11 +304,12 @@ export async function executeTool(context: ExecuteContext): Promise<ExecuteResul
     config.logging?.sensitiveHeaders ?? ['authorization', 'x-api-key']
   );
 
-  // Log request to SQLite database
+  // Log request to SQLite database and get requestId for later update
   // 条件：SQLite 日志启用时记录请求到数据库
+  let sqliteRequestId: RequestId | null = null;
   if (config.sqlite?.enabled) {
-    logger.info('[SQLite] 记录请求到 SQLite', { toolName, sqliteEnabled: config.sqlite.enabled });
-    logRequestToSqlite(toolName, tool.method, url, headers, requestBody);
+    sqliteRequestId = logRequestToSqlite(toolName, tool.method, url, headers, requestBody);
+    logger.debug('[SQLite] 请求已记录', { toolName, requestId: sqliteRequestId });
   } else {
     // SQLite 日志禁用：输出警告日志
     logger.warn('[SQLite] SQLite 日志禁用', { sqliteConfig: config.sqlite });
@@ -340,9 +342,9 @@ export async function executeTool(context: ExecuteContext): Promise<ExecuteResul
     // Log error
     logger.logError(toolName, error, duration);
 
-    // Log error to SQLite database
+    // Log error to SQLite database (with requestId for merging)
     if (config.sqlite?.enabled) {
-      logErrorToSqlite(toolName, error, duration, tool.method, url, headers, requestBody);
+      logErrorToSqlite(sqliteRequestId, toolName, error, duration, tool.method, url, headers, requestBody);
       // Flush buffers immediately for data integrity
       flushBuffers();
     }
@@ -398,9 +400,9 @@ export async function executeTool(context: ExecuteContext): Promise<ExecuteResul
     {} // Response headers not captured yet
   );
 
-  // Log response to SQLite database
+  // Log response to SQLite database (with requestId for merging)
   if (config.sqlite?.enabled) {
-    logResponseToSqlite(toolName, response.status, duration, responseData);
+    logResponseToSqlite(sqliteRequestId!, response.status, duration, responseData);
     // Flush buffers immediately for data integrity
     flushBuffers();
   }

@@ -4,6 +4,7 @@
  * Features:
  * - Batch write optimization
  * - Daily statistics aggregation
+ * - Request-response merged logging (one complete record per request)
  * - Query by date/tool
  *
  * @author lvdaxianerplus
@@ -14,6 +15,30 @@ import type Database from 'better-sqlite3';
 import type { SQLiteLoggingConfig } from '../config/types.js';
 import { getDatabase, getDatabasePath } from './connection.js';
 import { logger } from '../middleware/logger.js';
+
+/**
+ * 请求 ID 类型（用于关联请求和响应）
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-21
+ */
+export type RequestId = string;
+
+/**
+ * 待处理请求信息（临时存储，等待响应）
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-21
+ */
+interface PendingRequest {
+  toolName: string;
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+  body?: unknown;
+  timestamp: string;
+  dateKey: string;
+}
 
 // Batch write buffer
 interface RequestLogEntry {
@@ -51,6 +76,17 @@ interface ErrorLogEntry {
 const requestLogBuffer: RequestLogEntry[] = [];
 const errorLogBuffer: ErrorLogEntry[] = [];
 
+/**
+ * 待处理请求映射（用于合并请求和响应）
+ *
+ * Key: requestId (toolName-timestamp)
+ * Value: PendingRequest
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-21
+ */
+const pendingRequests: Map<RequestId, PendingRequest> = new Map();
+
 // Configuration
 let batchSize = 100;
 let flushTimeout = 5000; // 5 seconds
@@ -69,6 +105,7 @@ export function initSqliteLogger(config: SQLiteLoggingConfig): void {
   flushTimeout = config.syncInterval ?? 5000;
 
   // Start periodic flush timer
+  // 条件注释：已有定时器时清除，避免重复
   if (flushTimer) {
     clearInterval(flushTimer);
   }
@@ -80,16 +117,34 @@ export function initSqliteLogger(config: SQLiteLoggingConfig): void {
 }
 
 /**
- * Log request to SQLite (with batch optimization)
+ * Generate unique request ID
+ *
+ * @param toolName - Tool name
+ * @param timestamp - Request timestamp
+ * @returns Unique request ID
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-21
+ */
+function generateRequestId(toolName: string, timestamp: string): RequestId {
+  return `${toolName}-${timestamp}`;
+}
+
+/**
+ * Log request start to SQLite (returns requestId for later update)
+ *
+ * This function stores request info in a pending map, waiting for response.
+ * When response arrives, the full record will be written with both request and response.
  *
  * @param toolName - Tool name
  * @param method - HTTP method
  * @param url - Request URL
  * @param headers - Request headers
  * @param body - Request body
+ * @returns Request ID (used to update with response)
  *
  * @author lvdaxianerplus
- * @date 2026-04-19
+ * @date 2026-04-21
  */
 export function logRequestToSqlite(
   toolName: string,
@@ -97,80 +152,109 @@ export function logRequestToSqlite(
   url: string,
   headers: Record<string, string>,
   body?: unknown
-): void {
+): RequestId {
   const now = new Date();
   const timestamp = now.toISOString();
-  const date_key = timestamp.split('T')[0];
+  const dateKey = timestamp.split('T')[0];
 
-  const entry: RequestLogEntry = {
-    timestamp,
-    date_key,
-    level: 'info',
-    tool_name: toolName,
-    message: `Request: ${method} ${url}`,
+  // 生成唯一请求 ID
+  const requestId = generateRequestId(toolName, timestamp);
+
+  // 存储请求信息到 pending map（等待响应时合并）
+  pendingRequests.set(requestId, {
+    toolName,
     method,
     url,
-    request_headers: JSON.stringify(headers),
-    request_body: body ? JSON.stringify(body) : null,
-    // 条件注释：请求阶段无响应数据，设置为 null（SQLite 会存储 NULL 值）
-    response_status: null,
-    response_headers: null,
-    response_body: null,
-    duration: null,
-  };
+    headers,
+    body,
+    timestamp,
+    dateKey,
+  });
 
-  requestLogBuffer.push(entry);
+  logger.debug('[SQLite Logger] 请求已暂存', { requestId, toolName, method });
 
-  // Flush if buffer is full
-  if (requestLogBuffer.length >= batchSize) {
-    flushRequestBuffer();
-  }
+  return requestId;
 }
 
 /**
- * Log response to SQLite
+ * Log response to SQLite (merges with pending request to create complete record)
  *
- * @param toolName - Tool name
+ * This function finds the pending request by requestId and writes a complete
+ * record containing both request and response information.
+ *
+ * @param requestId - Request ID returned by logRequestToSqlite
  * @param status - HTTP status code
  * @param duration - Request duration in ms
  * @param body - Response body
  * @param headers - Response headers
  *
  * @author lvdaxianerplus
- * @date 2026-04-19
+ * @date 2026-04-21
  */
 export function logResponseToSqlite(
-  toolName: string,
+  requestId: RequestId,
   status: number,
   duration: number,
   body?: unknown,
   headers?: Record<string, string>
 ): void {
-  const now = new Date();
-  const timestamp = now.toISOString();
-  const date_key = timestamp.split('T')[0];
+  // 从 pending map 获取请求信息
+  const pendingRequest = pendingRequests.get(requestId);
 
-  const entry: RequestLogEntry = {
-    timestamp,
-    date_key,
-    level: status >= 200 && status < 300 ? 'info' : 'warn',
-    tool_name: toolName,
-    message: `Response: ${status}`,
-    // 条件注释：响应阶段无请求详情，设置为 null
-    method: null,
-    url: null,
-    request_headers: null,
-    request_body: null,
-    response_status: status,
-    response_headers: headers ? JSON.stringify(headers) : null,
-    response_body: body ? JSON.stringify(body) : null,
-    duration,
-  };
+  // 条件注释：找到待处理请求时合并写入，未找到时单独写入响应
+  if (pendingRequest) {
+    // 合并请求和响应信息，写入一条完整记录
+    const entry: RequestLogEntry = {
+      timestamp: pendingRequest.timestamp,
+      date_key: pendingRequest.dateKey,
+      level: status >= 200 && status < 300 ? 'info' : 'warn',
+      tool_name: pendingRequest.toolName,
+      message: `${pendingRequest.method} ${pendingRequest.url} → ${status}`,
+      method: pendingRequest.method,
+      url: pendingRequest.url,
+      request_headers: JSON.stringify(pendingRequest.headers),
+      request_body: pendingRequest.body ? JSON.stringify(pendingRequest.body) : null,
+      response_status: status,
+      response_headers: headers ? JSON.stringify(headers) : null,
+      response_body: body ? JSON.stringify(body) : null,
+      duration,
+    };
 
-  requestLogBuffer.push(entry);
+    requestLogBuffer.push(entry);
 
-  // Update daily stats
-  updateDailyStats(date_key, toolName, status, duration);
+    // 从 pending map 移除已完成的请求
+    pendingRequests.delete(requestId);
+
+    // Update daily stats
+    updateDailyStats(pendingRequest.dateKey, pendingRequest.toolName, status, duration);
+
+    logger.debug('[SQLite Logger] 响应已合并写入', { requestId, status, duration });
+  } else {
+    // 未找到待处理请求（可能是遗留响应），单独写入
+    const now = new Date();
+    const timestamp = now.toISOString();
+    const dateKey = timestamp.split('T')[0];
+
+    const entry: RequestLogEntry = {
+      timestamp,
+      date_key: dateKey,
+      level: status >= 200 && status < 300 ? 'info' : 'warn',
+      tool_name: 'unknown',
+      message: `Response: ${status} (no pending request)`,
+      method: null,
+      url: null,
+      request_headers: null,
+      request_body: null,
+      response_status: status,
+      response_headers: headers ? JSON.stringify(headers) : null,
+      response_body: body ? JSON.stringify(body) : null,
+      duration,
+    };
+
+    requestLogBuffer.push(entry);
+
+    logger.warn('[SQLite Logger] 未找到待处理请求', { requestId });
+  }
 
   // Flush if buffer is full
   if (requestLogBuffer.length >= batchSize) {
@@ -179,20 +263,22 @@ export function logResponseToSqlite(
 }
 
 /**
- * Log error to SQLite
+ * Log error to SQLite (merges with pending request if available)
  *
+ * @param requestId - Request ID (optional, for merging with pending request)
  * @param toolName - Tool name
  * @param error - Error object or message
  * @param duration - Request duration in ms
- * @param method - Request method
- * @param url - Request URL
- * @param headers - Request headers
- * @param body - Request body
+ * @param method - Request method (fallback if no pending request)
+ * @param url - Request URL (fallback if no pending request)
+ * @param headers - Request headers (fallback if no pending request)
+ * @param body - Request body (fallback if no pending request)
  *
  * @author lvdaxianerplus
- * @date 2026-04-19
+ * @date 2026-04-21
  */
 export function logErrorToSqlite(
+  requestId: RequestId | null,
   toolName: string,
   error: unknown,
   duration: number,
@@ -201,32 +287,41 @@ export function logErrorToSqlite(
   headers?: Record<string, string>,
   body?: unknown
 ): void {
+  // 尝试从 pending map 获取请求信息
+  const pendingRequest = requestId ? pendingRequests.get(requestId) : null;
+
   const now = new Date();
-  const timestamp = now.toISOString();
-  const date_key = timestamp.split('T')[0];
+  const timestamp = pendingRequest?.timestamp ?? now.toISOString();
+  const dateKey = pendingRequest?.dateKey ?? timestamp.split('T')[0];
 
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorStack = error instanceof Error ? error.stack : undefined;
 
+  // 条件注释：找到待处理请求时使用请求信息，未找到时使用传入参数
   const entry: ErrorLogEntry = {
     timestamp,
-    date_key,
+    date_key: dateKey,
     level: 'error',
-    tool_name: toolName,
+    tool_name: pendingRequest?.toolName ?? toolName,
     message: `Error: ${errorMessage}`,
     error_type: error instanceof Error ? error.constructor.name : 'Unknown',
     error_stack: errorStack,
-    request_method: method,
-    request_url: url,
-    request_headers: headers ? JSON.stringify(headers) : undefined,
-    request_body: body ? JSON.stringify(body) : undefined,
+    request_method: pendingRequest?.method ?? method,
+    request_url: pendingRequest?.url ?? url,
+    request_headers: pendingRequest ? JSON.stringify(pendingRequest.headers) : headers ? JSON.stringify(headers) : undefined,
+    request_body: pendingRequest?.body ? JSON.stringify(pendingRequest.body) : body ? JSON.stringify(body) : undefined,
     duration,
   };
 
   errorLogBuffer.push(entry);
 
+  // 从 pending map 移除（如果有）
+  if (requestId && pendingRequest) {
+    pendingRequests.delete(requestId);
+  }
+
   // Update daily stats (error)
-  updateDailyStats(date_key, toolName, 0, duration, true);
+  updateDailyStats(dateKey, pendingRequest?.toolName ?? toolName, 0, duration, true);
 
   // Flush if buffer is full
   if (errorLogBuffer.length >= batchSize) {
@@ -243,6 +338,29 @@ export function logErrorToSqlite(
 export function flushBuffers(): void {
   flushRequestBuffer();
   flushErrorBuffer();
+
+  // 清理过期的待处理请求（超过 5 分钟未响应）
+  cleanupExpiredPendingRequests();
+}
+
+/**
+ * 清理过期的待处理请求
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-21
+ */
+function cleanupExpiredPendingRequests(): void {
+  const now = Date.now();
+  const expireThreshold = 5 * 60 * 1000; // 5 分钟
+
+  for (const [requestId, pending] of pendingRequests.entries()) {
+    const requestTime = new Date(pending.timestamp).getTime();
+    if (now - requestTime > expireThreshold) {
+      // 超时未响应，清理并记录警告
+      logger.warn('[SQLite Logger] 清理过期待处理请求', { requestId, toolName: pending.toolName });
+      pendingRequests.delete(requestId);
+    }
+  }
 }
 
 /**
@@ -558,16 +676,17 @@ function createNewStatsEntry(
  */
 export function getRequestLogsByDate(date: string, limit: number = 100): RequestLogEntry[] {
   const db = getDatabase();
+  // 条件注释：数据库不可用返回空数组，可用时查询
   if (!db) {
     return [];
+  } else {
+    return db.prepare(`
+      SELECT * FROM request_logs
+      WHERE date_key = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    `).all(date, limit) as RequestLogEntry[];
   }
-
-  return db.prepare(`
-    SELECT * FROM request_logs
-    WHERE date_key = ?
-    ORDER BY timestamp DESC
-    LIMIT ?
-  `).all(date, limit) as RequestLogEntry[];
 }
 
 /**
@@ -582,16 +701,17 @@ export function getRequestLogsByDate(date: string, limit: number = 100): Request
  */
 export function getRequestLogsByTool(toolName: string, limit: number = 100): RequestLogEntry[] {
   const db = getDatabase();
+  // 条件注释：数据库不可用返回空数组，可用时查询
   if (!db) {
     return [];
+  } else {
+    return db.prepare(`
+      SELECT * FROM request_logs
+      WHERE tool_name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    `).all(toolName, limit) as RequestLogEntry[];
   }
-
-  return db.prepare(`
-    SELECT * FROM request_logs
-    WHERE tool_name = ?
-    ORDER BY timestamp DESC
-    LIMIT ?
-  `).all(toolName, limit) as RequestLogEntry[];
 }
 
 /**
@@ -606,16 +726,17 @@ export function getRequestLogsByTool(toolName: string, limit: number = 100): Req
  */
 export function getErrorLogsByDate(date: string, limit: number = 100): ErrorLogEntry[] {
   const db = getDatabase();
+  // 条件注释：数据库不可用返回空数组，可用时查询
   if (!db) {
     return [];
+  } else {
+    return db.prepare(`
+      SELECT * FROM error_logs
+      WHERE date_key = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    `).all(date, limit) as ErrorLogEntry[];
   }
-
-  return db.prepare(`
-    SELECT * FROM error_logs
-    WHERE date_key = ?
-    ORDER BY timestamp DESC
-    LIMIT ?
-  `).all(date, limit) as ErrorLogEntry[];
 }
 
 /**
@@ -648,32 +769,33 @@ export function getFailedRequestLogs(
   duration?: number;
 }> {
   const db = getDatabase();
+  // 条件注释：数据库不可用返回空数组，可用时查询失败请求
   if (!db) {
     return [];
+  } else {
+    // 查询 request_logs 表中 response_status >= 400 的记录
+    return db.prepare(`
+      SELECT * FROM request_logs
+      WHERE date_key = ? AND (response_status >= 400 OR response_status = 0 OR level = 'error')
+      ORDER BY timestamp DESC
+      LIMIT ?
+    `).all(date, limit) as Array<{
+      id: number;
+      timestamp: string;
+      date_key: string;
+      level: string;
+      tool_name: string;
+      message: string;
+      method?: string;
+      url?: string;
+      request_headers?: string;
+      request_body?: string;
+      response_status?: number;
+      response_headers?: string;
+      response_body?: string;
+      duration?: number;
+    }>;
   }
-
-  // 查询 request_logs 表中 response_status >= 400 的记录
-  return db.prepare(`
-    SELECT * FROM request_logs
-    WHERE date_key = ? AND (response_status >= 400 OR response_status = 0 OR level = 'error')
-    ORDER BY timestamp DESC
-    LIMIT ?
-  `).all(date, limit) as Array<{
-    id: number;
-    timestamp: string;
-    date_key: string;
-    level: string;
-    tool_name: string;
-    message: string;
-    method?: string;
-    url?: string;
-    request_headers?: string;
-    request_body?: string;
-    response_status?: number;
-    response_headers?: string;
-    response_body?: string;
-    duration?: number;
-  }>;
 }
 
 /**
@@ -710,88 +832,89 @@ export function getAllErrorLogs(
   duration?: number;
 }> {
   const db = getDatabase();
+  // 条件注释：数据库不可用返回空数组，可用时合并查询
   if (!db) {
     return [];
+  } else {
+    // 查询 error_logs 表
+    const errorLogs = db.prepare(`
+      SELECT id, timestamp, date_key, level, tool_name, message,
+             request_method as method, request_url as url,
+             request_headers, request_body, duration,
+             error_type, error_stack
+      FROM error_logs
+      WHERE date_key = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    `).all(date, limit) as Array<{
+      id: number;
+      timestamp: string;
+      date_key: string;
+      level: string;
+      tool_name: string;
+      message: string;
+      method?: string;
+      url?: string;
+      request_headers?: string;
+      request_body?: string;
+      duration?: number;
+      error_type?: string;
+      error_stack?: string;
+    }>;
+
+    // 查询 request_logs 表中的失败请求
+    const failedRequests = db.prepare(`
+      SELECT id, timestamp, date_key, level, tool_name, message,
+             method, url, request_headers, request_body,
+             response_status, response_body, duration
+      FROM request_logs
+      WHERE date_key = ? AND (response_status >= 400 OR response_status = 0 OR level = 'error')
+      ORDER BY timestamp DESC
+      LIMIT ?
+    `).all(date, limit) as Array<{
+      id: number;
+      timestamp: string;
+      date_key: string;
+      level: string;
+      tool_name: string;
+      message: string;
+      method?: string;
+      url?: string;
+      request_headers?: string;
+      request_body?: string;
+      response_status?: number;
+      response_body?: string;
+      duration?: number;
+    }>;
+
+    // 合并并排序
+    const combined: Array<{
+      id: number;
+      timestamp: string;
+      date_key: string;
+      level: string;
+      tool_name: string;
+      message: string;
+      type: 'error' | 'failed_request';
+      method?: string;
+      url?: string;
+      request_headers?: string;
+      request_body?: string;
+      response_status?: number;
+      response_body?: string;
+      error_type?: string;
+      error_stack?: string;
+      duration?: number;
+    }> = [
+      ...errorLogs.map(log => ({ ...log, type: 'error' as const })),
+      ...failedRequests.map(log => ({ ...log, type: 'failed_request' as const })),
+    ];
+
+    // 按时间戳降序排序
+    combined.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+
+    return combined.slice(0, limit);
   }
-
-  // 查询 error_logs 表
-  const errorLogs = db.prepare(`
-    SELECT id, timestamp, date_key, level, tool_name, message,
-           request_method as method, request_url as url,
-           request_headers, request_body, duration,
-           error_type, error_stack
-    FROM error_logs
-    WHERE date_key = ?
-    ORDER BY timestamp DESC
-    LIMIT ?
-  `).all(date, limit) as Array<{
-    id: number;
-    timestamp: string;
-    date_key: string;
-    level: string;
-    tool_name: string;
-    message: string;
-    method?: string;
-    url?: string;
-    request_headers?: string;
-    request_body?: string;
-    duration?: number;
-    error_type?: string;
-    error_stack?: string;
-  }>;
-
-  // 查询 request_logs 表中的失败请求
-  const failedRequests = db.prepare(`
-    SELECT id, timestamp, date_key, level, tool_name, message,
-           method, url, request_headers, request_body,
-           response_status, response_body, duration
-    FROM request_logs
-    WHERE date_key = ? AND (response_status >= 400 OR response_status = 0 OR level = 'error')
-    ORDER BY timestamp DESC
-    LIMIT ?
-  `).all(date, limit) as Array<{
-    id: number;
-    timestamp: string;
-    date_key: string;
-    level: string;
-    tool_name: string;
-    message: string;
-    method?: string;
-    url?: string;
-    request_headers?: string;
-    request_body?: string;
-    response_status?: number;
-    response_body?: string;
-    duration?: number;
-  }>;
-
-  // 合并并排序
-  const combined: Array<{
-    id: number;
-    timestamp: string;
-    date_key: string;
-    level: string;
-    tool_name: string;
-    message: string;
-    type: 'error' | 'failed_request';
-    method?: string;
-    url?: string;
-    request_headers?: string;
-    request_body?: string;
-    response_status?: number;
-    response_body?: string;
-    error_type?: string;
-    error_stack?: string;
-    duration?: number;
-  }> = [
-    ...errorLogs.map(log => ({ ...log, type: 'error' as const })),
-    ...failedRequests.map(log => ({ ...log, type: 'failed_request' as const })),
-  ];
-
-  // 按时间戳降序排序
-  combined.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-
-  return combined.slice(0, limit);
 }
 
 /**
@@ -816,22 +939,23 @@ export function getDailyStats(
   tool_stats: string;
 }> {
   const db = getDatabase();
+  // 条件注释：数据库不可用返回空数组，可用时查询
   if (!db) {
     return [];
+  } else {
+    return db.prepare(`
+      SELECT * FROM daily_stats
+      WHERE date_key BETWEEN ? AND ?
+      ORDER BY date_key DESC
+    `).all(startDate, endDate) as Array<{
+      date_key: string;
+      total_requests: number;
+      total_successes: number;
+      total_errors: number;
+      avg_duration: number;
+      tool_stats: string;
+    }>;
   }
-
-  return db.prepare(`
-    SELECT * FROM daily_stats
-    WHERE date_key BETWEEN ? AND ?
-    ORDER BY date_key DESC
-  `).all(startDate, endDate) as Array<{
-    date_key: string;
-    total_requests: number;
-    total_successes: number;
-    total_errors: number;
-    avg_duration: number;
-    tool_stats: string;
-  }>;
 }
 
 /**
@@ -857,58 +981,59 @@ export function getRecentLogs(count: number = 100): Array<{
   type: 'request' | 'error';
 }> {
   const db = getDatabase();
+  // 条件注释：数据库不可用返回空数组，可用时合并查询
   if (!db) {
     return [];
+  } else {
+    // Get recent request logs
+    const requestLogs = db.prepare(`
+      SELECT id, timestamp, date_key, level, tool_name, message,
+             method, url, response_status, duration
+      FROM request_logs
+      ORDER BY timestamp DESC
+      LIMIT ?
+    `).all(count / 2) as Array<{
+      id: number;
+      timestamp: string;
+      date_key: string;
+      level: string;
+      tool_name: string;
+      message: string;
+      method?: string;
+      url?: string;
+      response_status?: number;
+      duration?: number;
+    }>;
+
+    // Get recent error logs
+    const errorLogs = db.prepare(`
+      SELECT id, timestamp, date_key, level, tool_name, message,
+             request_method as method, request_url as url, duration
+      FROM error_logs
+      ORDER BY timestamp DESC
+      LIMIT ?
+    `).all(count / 2) as Array<{
+      id: number;
+      timestamp: string;
+      date_key: string;
+      level: string;
+      tool_name: string;
+      message: string;
+      method?: string;
+      url?: string;
+      duration?: number;
+    }>;
+
+    // Combine and sort by timestamp
+    const combined = [
+      ...requestLogs.map(log => ({ ...log, type: 'request' as const })),
+      ...errorLogs.map(log => ({ ...log, response_status: undefined, type: 'error' as const })),
+    ];
+
+    combined.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+
+    return combined.slice(0, count);
   }
-
-  // Get recent request logs
-  const requestLogs = db.prepare(`
-    SELECT id, timestamp, date_key, level, tool_name, message,
-           method, url, response_status, duration
-    FROM request_logs
-    ORDER BY timestamp DESC
-    LIMIT ?
-  `).all(count / 2) as Array<{
-    id: number;
-    timestamp: string;
-    date_key: string;
-    level: string;
-    tool_name: string;
-    message: string;
-    method?: string;
-    url?: string;
-    response_status?: number;
-    duration?: number;
-  }>;
-
-  // Get recent error logs
-  const errorLogs = db.prepare(`
-    SELECT id, timestamp, date_key, level, tool_name, message,
-           request_method as method, request_url as url, duration
-    FROM error_logs
-    ORDER BY timestamp DESC
-    LIMIT ?
-  `).all(count / 2) as Array<{
-    id: number;
-    timestamp: string;
-    date_key: string;
-    level: string;
-    tool_name: string;
-    message: string;
-    method?: string;
-    url?: string;
-    duration?: number;
-  }>;
-
-  // Combine and sort by timestamp
-  const combined = [
-    ...requestLogs.map(log => ({ ...log, type: 'request' as const })),
-    ...errorLogs.map(log => ({ ...log, response_status: undefined, type: 'error' as const })),
-  ];
-
-  combined.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-
-  return combined.slice(0, count);
 }
 
 /**
@@ -1139,6 +1264,7 @@ export function getTodayStats(): {
   const db = getDatabase();
   const today = new Date().toISOString().split('T')[0];
 
+  // 条件注释：数据库不可用返回默认值，可用时查询今日统计
   if (!db) {
     return {
       date_key: today,
@@ -1148,34 +1274,35 @@ export function getTodayStats(): {
       avg_duration: 0,
       tool_stats: {},
     };
+  } else {
+    const stats = db.prepare(`
+      SELECT * FROM daily_stats WHERE date_key = ?
+    `).get(today) as {
+      date_key: string;
+      total_requests: number;
+      total_successes: number;
+      total_errors: number;
+      avg_duration: number;
+      tool_stats: string;
+    } | undefined;
+
+    // 条件注释：统计不存在返回默认值，存在时解析并返回
+    if (!stats) {
+      return {
+        date_key: today,
+        total_requests: 0,
+        total_successes: 0,
+        total_errors: 0,
+        avg_duration: 0,
+        tool_stats: {},
+      };
+    } else {
+      return {
+        ...stats,
+        tool_stats: stats.tool_stats ? JSON.parse(stats.tool_stats) : {},
+      };
+    }
   }
-
-  const stats = db.prepare(`
-    SELECT * FROM daily_stats WHERE date_key = ?
-  `).get(today) as {
-    date_key: string;
-    total_requests: number;
-    total_successes: number;
-    total_errors: number;
-    avg_duration: number;
-    tool_stats: string;
-  } | undefined;
-
-  if (!stats) {
-    return {
-      date_key: today,
-      total_requests: 0,
-      total_successes: 0,
-      total_errors: 0,
-      avg_duration: 0,
-      tool_stats: {},
-    };
-  }
-
-  return {
-    ...stats,
-    tool_stats: stats.tool_stats ? JSON.parse(stats.tool_stats) : {},
-  };
 }
 
 /**
@@ -1185,6 +1312,7 @@ export function getTodayStats(): {
  * @date 2026-04-19
  */
 export function stopSqliteLogger(): void {
+  // 条件注释：定时器存在时清除
   if (flushTimer) {
     clearInterval(flushTimer);
     flushTimer = null;
