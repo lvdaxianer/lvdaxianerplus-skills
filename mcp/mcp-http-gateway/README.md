@@ -435,6 +435,8 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
 | `--sqlite` | 启用 SQLite 日志 |
 | `--sqlite-path <path>` | 指定 SQLite 数据库路径 |
 
+> 📖 **完整参数说明**：参见 [CONFIG.md](CONFIG.md) 了解所有配置参数的详细说明、类型、是否可选及默认值。
+
 ---
 
 ## 最小配置示例
