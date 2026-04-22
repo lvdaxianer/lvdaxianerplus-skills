@@ -92,7 +92,8 @@ function registerAllRoutes(router: RouterStrategyTable, config: Config): void {
   router.registerAll(getToolCacheRoutes());
 
   // 加载工具缓存配置
-  loadToolCacheConfigs();
+  // 条件注释：传入 config 参数，首次启动时同步配置文件到数据库
+  loadToolCacheConfigs(config);
 
   logger.info('[HTTP服务] 已注册路由', {
     count: router.getRoutes().length,

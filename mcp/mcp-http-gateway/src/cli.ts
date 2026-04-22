@@ -12,7 +12,7 @@
  */
 
 import { loadConfig, watchConfig, stopWatchingConfig } from './config/loader.js';
-import { startStdioServer } from './core/server.js';
+import { startStdioServer, startSseServer } from './core/server.js';
 import { startHttpServer, closeHttpServer } from './routes/http-server.js';
 import { initCache } from './features/cache.js';
 import { setLogLevel, initFileLogging } from './middleware/logger.js';
@@ -110,7 +110,8 @@ async function main(): Promise<void> {
     logger.info('[启动] SQLite logging enabled', { dbPath: sqliteConfig.dbPath, source: cliArgs.sqlitePath ? 'CLI' : config.sqlite?.dbPath ? 'config' : 'default' });
 
     // 加载工具级缓存配置
-    loadToolCacheConfigs();
+    // 条件注释：传入 config 参数，首次启动时同步配置文件到数据库
+    loadToolCacheConfigs(config);
   } else {
     // SQLite 日志禁用：跳过初始化
     logger.info('[启动] SQLite logging disabled by config');
@@ -170,12 +171,25 @@ async function main(): Promise<void> {
   // Setup graceful shutdown
   setupGracefulShutdown();
 
-  // Start STDIO server for MCP protocol
-  try {
-    await startStdioServer(config);
-  } catch (error) {
-    logger.error('Failed to start STDIO server', { error });
-    process.exit(1);
+  // Start MCP Server based on transport mode
+  // 条件注释：根据 transport 参数选择 STDIO 或 SSE 模式
+  if (cliArgs.transport === 'sse') {
+    // SSE 模式：持久运行，支持多会话连接
+    try {
+      await startSseServer(config, cliArgs.ssePort);
+      logger.info('[启动] SSE Server started', { ssePort: cliArgs.ssePort });
+    } catch (error) {
+      logger.error('[启动] Failed to start SSE server', { error });
+      process.exit(1);
+    }
+  } else {
+    // STDIO 模式：每次会话启动新进程
+    try {
+      await startStdioServer(config);
+    } catch (error) {
+      logger.error('[启动] Failed to start STDIO server', { error });
+      process.exit(1);
+    }
   }
 }
 

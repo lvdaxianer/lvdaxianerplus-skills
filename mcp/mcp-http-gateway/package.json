@@ -1,18 +1,60 @@
 {
   "name": "mcp-http-gateway",
-  "version": "1.0.0",
-  "description": "MCP protocol gateway for forwarding tool calls to HTTP REST APIs",
+  "version": "1.2.0",
+  "description": "MCP HTTP Gateway - 将 LLM 工具调用转发到 HTTP REST API，支持熔断器、降级策略、缓存、Mock、SQLite 日志",
+  "author": {
+    "name": "lvdaxianer",
+    "email": "lvdaxianerplus@gmail.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/lvdaxianer/lvdaxianerplus-ai/tree/main/mcp/mcp-http-gateway",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lvdaxianer/lvdaxianerplus-ai.git",
+    "directory": "mcp/mcp-http-gateway"
+  },
+  "bugs": {
+    "url": "https://github.com/lvdaxianer/lvdaxianerplus-ai/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "http-gateway",
+    "llm",
+    "claude",
+    "anthropic",
+    "circuit-breaker",
+    "fallback",
+    "cache",
+    "mock",
+    "sqlite",
+    "dashboard"
+  ],
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
   "bin": {
     "mcp-http-gateway": "dist/cli.js"
   },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "tsc && node dist/index.js",
+    "start": "node dist/cli.js",
+    "dev": "tsc && node dist/cli.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
@@ -33,5 +75,8 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

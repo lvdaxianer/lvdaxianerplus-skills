@@ -22,10 +22,27 @@ let cacheConfig: CacheConfig | null = null;
  * @param config - Cache configuration
  */
 export function initCache(config: CacheConfig): void {
+  // 条件注释：TTL = 0 或 Infinity 表示永不过期，不传给 LRUCache 的 ttl 参数
+  // LRUCache 的 ttl 参数会导致条目自动过期删除，我们需要手动控制过期
+  const ttlForLru = (config.ttl === 0 || config.ttl === Infinity) ? Infinity : config.ttl;
+
+  // 条件注释：缓存已存在时检查配置是否变化
+  // 只有配置变化时才重新创建缓存，避免清除已有数据
+  const configChanged = cacheConfig?.maxSize !== config.maxSize ||
+    (cacheConfig?.ttl === 0 || cacheConfig?.ttl === Infinity ? Infinity : cacheConfig?.ttl) !== ttlForLru;
+
+  if (cache && !configChanged) {
+    // 配置未变化，只更新 cacheConfig 引用，不重新创建缓存
+    cacheConfig = config;
+    return;
+  }
+
+  // 条件注释：配置变化或缓存不存在时重新创建缓存
   cacheConfig = config;
   cache = new LRUCache<string, CacheEntry>({
     max: config.maxSize,
-    ttl: config.ttl,
+    // 条件注释：仅在 TTL > 0 时设置自动过期
+    ttl: ttlForLru,
   });
 }
 
@@ -182,12 +199,21 @@ export function cacheResponse(
   // Generate deterministic cache key from tool name and arguments
   const key = generateCacheKey(toolName, args);
 
+  // 条件注释：使用传入的 TTL 或全局 TTL
+  // 优先使用传入的 config.ttl（工具级缓存配置）
+  const ttlToUse = config?.ttl ?? cacheConfig?.ttl ?? 0;
+
   // Store response data with current timestamp for TTL tracking
   // LRU cache handles eviction when maxSize is reached
-  // Entry will be automatically evicted when it expires (TTL)
+  // 条件注释：TTL = 0 或 Infinity 时使用 Infinity，表示永不过期
+  const ttlForSet = (ttlToUse === 0 || ttlToUse === Infinity) ? Infinity : ttlToUse;
+
+  // 条件注释：使用 LRUCache 的 set 方法，支持每条目 TTL
   cache.set(key, {
     data,
     timestamp: Date.now(),
+  }, {
+    ttl: ttlForSet, // 每条目的 TTL
   });
 }
 
@@ -367,7 +393,10 @@ export function getCachedResponseForFallback(
 
   // Generate deterministic cache key from tool name and arguments
   const key = generateCacheKey(toolName, args);
-  const entry = cache.get(key);
+
+  // 条件注释：使用 allowStale: true 获取过期数据（用于降级场景）
+  // LRUCache 的 get 方法默认会删除过期条目，allowStale 选项允许返回过期数据
+  const entry = cache.get(key, { allowStale: true });
 
   // Cache miss: no entry found for this key
   // Note: We don't check TTL here because fallback needs ANY available data

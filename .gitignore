@@ -30,6 +30,8 @@ data
 .specify
 .superpowers
 .mcp.json
+server.log
+mcp-gateway.db
 
 # 规范和文档目录（项目特定）
 specs/

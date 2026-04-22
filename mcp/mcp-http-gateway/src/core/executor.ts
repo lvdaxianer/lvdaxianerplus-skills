@@ -449,9 +449,11 @@ export async function executeTool(context: ExecuteContext): Promise<ExecuteResul
     // 条件注释：工具级缓存默认永不过期（TTL = 0），用于降级场景
     // 工具级缓存主要用于降级，不应该过期
     const toolTtl = getToolCacheTtl(toolName) ?? 0; // 默认 TTL = 0 表示永不过期
-    const cacheConfig = { enabled: true, ttl: toolTtl, maxSize: config.cache?.maxSize ?? 1000 };
-    logger.info(`[${toolName}] 正在缓存响应`, { ttl: toolTtl === 0 ? '永不过期' : toolTtl, maxSize: cacheConfig.maxSize });
-    cacheResponse(toolName, args, responseData, cacheConfig);
+    const toolCacheConfig = { enabled: true, ttl: toolTtl, maxSize: config.cache?.maxSize ?? 1000 };
+    logger.info(`[${toolName}] 正在缓存响应`, { ttl: toolTtl === 0 ? '永不过期' : toolTtl, maxSize: toolCacheConfig.maxSize });
+    // 条件注释：直接使用 cacheResponse，传入工具级配置
+    // cacheResponse 现在支持每条目 TTL，无需先调用 initCache
+    cacheResponse(toolName, args, responseData, toolCacheConfig);
     logger.info(`[${toolName}] 响应已缓存`);
   } else if (tool.method === 'GET' && config.cache?.enabled && response.status >= 200 && response.status < 300) {
     // 全局缓存仅对 GET 请求生效

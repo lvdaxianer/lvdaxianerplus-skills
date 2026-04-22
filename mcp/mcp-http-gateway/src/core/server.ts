@@ -21,9 +21,14 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import type { Config } from '../config/types.js';
 import { logger } from '../middleware/logger.js';
 import { registerListToolsHandler, registerCallToolHandler } from './server-handlers.js';
+import http from 'http';
+
+// 导入 Server 类型用于 SSE 连接存储
+type McpServer = Server;
 
 // ============================================================================
 // 类型定义
@@ -134,4 +139,104 @@ export async function startStdioServer(config: Config): Promise<void> {
 
   // 记录启动成功日志
   logger.info('[服务器] MCP Server 已启动');
+}
+
+// ============================================================================
+// SSE Server 启动函数（使用 SSEServerTransport）
+// ============================================================================
+
+/**
+ * 启动 MCP Server（SSE 传输）
+ *
+ * 功能：创建 HTTP 服务处理 SSE 连接。
+ *
+ * SSE 传输说明：
+ * - 通过 HTTP SSE 与客户端通信
+ * - VSCode 使用 GET 建立 SSE 流，POST 发送消息
+ * - 每个连接创建新的 Server 和 Transport
+ *
+ * SSEServerTransport 流程：
+ * - GET /sse：创建 transport，建立 SSE 流，返回 endpoint URL（含 sessionId）
+ * - POST /message?sessionId=xxx：接收客户端消息
+ *
+ * @param config - 工具配置
+ * @param ssePort - SSE 服务端口（默认 11113）
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-22
+ */
+export async function startSseServer(config: Config, ssePort: number = 11113): Promise<void> {
+  // 存储活跃的 SSE 连接（sessionId -> { server, transport }）
+  const activeConnections: Map<string, { server: Server; transport: SSEServerTransport }> = new Map();
+
+  // 创建 HTTP 服务处理 SSE 连接和消息
+  const httpServer = http.createServer(async (req, res) => {
+    const url = req.url ?? '/';
+    const method = req.method ?? 'GET';
+
+    // 条件注释：GET /sse 建立 SSE 流（每个连接创建新的 Server）
+    if (method === 'GET' && url === '/sse') {
+      logger.info('[SSE] 收到 SSE 连接请求（GET）');
+
+      // 创建新的 Server 实例（每个 SSE 连接独立）
+      const mcpServer = createMcpServer({ config });
+
+      // 创建 SSE 传输层（endpoint 为 /message）
+      // 条件注释：SSEServerTransport 构造函数需要 endpoint 和 ServerResponse
+      const transport = new SSEServerTransport('/message', res);
+      const sessionId = transport.sessionId;
+
+      // 存储连接
+      activeConnections.set(sessionId, { server: mcpServer, transport });
+
+      // 设置关闭回调
+      transport.onclose = () => {
+        activeConnections.delete(sessionId);
+        logger.info('[SSE] SSE 连接已关闭', { sessionId });
+      };
+
+      // 连接 Server 和 Transport（会自动调用 transport.start()）
+      // 条件注释：Server.connect() 内部会调用 transport.start()
+      await mcpServer.connect(transport);
+
+      logger.info('[SSE] SSE 流已建立', { sessionId });
+    }
+    // 条件注释：POST /message 接收客户端消息
+    else if (method === 'POST' && url.startsWith('/message')) {
+      logger.info('[SSE] 收到消息请求（POST）', { url });
+
+      // 从 URL query 提取 sessionId
+      const match = url.match(/sessionId=([a-f0-9-]+)/);
+      const sessionId = match?.[1];
+
+      if (!sessionId) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Missing sessionId in URL');
+        return;
+      }
+
+      const connection = activeConnections.get(sessionId);
+      if (!connection) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Session not found');
+        return;
+      }
+
+      // 处理消息（transport.handlePostMessage 会自动处理）
+      await connection.transport.handlePostMessage(req, res);
+    }
+    // 条件注释：其他请求返回 404
+    else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not found');
+    }
+  });
+
+  // 监听端口
+  httpServer.listen(ssePort, 'localhost', () => {
+    logger.info('[服务器] SSE Server 已启动', { port: ssePort, endpoint: '/sse' });
+  });
+
+  // 记录启动成功日志
+  logger.info('[服务器] MCP SSE Server 已启动，等待连接');
 }

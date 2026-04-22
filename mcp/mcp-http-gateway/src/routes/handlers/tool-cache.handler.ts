@@ -5,6 +5,8 @@
  * - GET /api/cache/tools - 获取所有工具缓存配置
  * - PUT /api/cache/tools/:toolName - 更新单个工具缓存配置
  * - DELETE /api/cache/tools/:toolName - 删除单个工具缓存配置
+ * - 首次启动时同步配置文件到 SQLite
+ * - 后续启动时使用 SQLite 配置（忽略配置文件）
  *
  * @author lvdaxianerplus
  * @date 2026-04-21
@@ -12,7 +14,9 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { RouteHandler } from '../router.js';
+import type { Config, ToolConfig, CacheConfig } from '../../config/types.js';
 import { getDatabase } from '../../database/connection.js';
+import Database from 'better-sqlite3';
 import {
   sendJsonResponse,
   sendBadRequestResponse,
@@ -46,10 +50,16 @@ let toolCacheConfigs: Record<string, ToolCacheConfig> = {};
 /**
  * 从数据库加载工具缓存配置
  *
+ * 优先级机制：
+ * 1. 首次启动（数据库无配置）：同步配置文件到 SQLite
+ * 2. 后续启动（数据库有配置）：使用 SQLite 配置，忽略配置文件
+ *
+ * @param config - 全局配置（用于首次同步）
+ *
  * @author lvdaxianerplus
  * @date 2026-04-21
  */
-export function loadToolCacheConfigs(): void {
+export function loadToolCacheConfigs(config?: Config): void {
   const db = getDatabase();
 
   // 条件注释：数据库不可用时跳过加载
@@ -57,8 +67,22 @@ export function loadToolCacheConfigs(): void {
     logger.warn('[工具缓存] Database not available, using memory only');
     return;
   } else {
-    // 数据库可用，加载配置
+    // 数据库可用，检查是否有配置
     try {
+      const countRow = db.prepare(`
+        SELECT COUNT(*) as count FROM tool_cache_configs
+      `).get() as { count: number };
+
+      // 条件注释：数据库中没有配置，首次启动时同步配置文件
+      if (countRow.count === 0 && config) {
+        logger.info('[工具缓存] Database empty, syncing from config file');
+        syncToolCacheConfigsFromConfigFile(config, db);
+      } else {
+        // 条件注释：数据库中有配置，直接使用数据库配置（忽略配置文件）
+        logger.info('[工具缓存] Using database configs, ignoring config file');
+      }
+
+      // 从数据库加载配置到内存
       const rows = db.prepare(`
         SELECT tool_name, enabled, ttl
         FROM tool_cache_configs
@@ -78,6 +102,41 @@ export function loadToolCacheConfigs(): void {
       logger.info('[工具缓存] Loaded configs from database', { count: rows.length });
     } catch (error) {
       logger.error('[工具缓存] Failed to load configs', { error });
+    }
+  }
+}
+
+/**
+ * 同步配置文件中的工具缓存配置到 SQLite
+ *
+ * 条件注释：仅在数据库无配置时调用（首次启动）
+ *
+ * @param config - 全局配置
+ * @param db - 数据库连接（已确保不为 null）
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-22
+ */
+function syncToolCacheConfigsFromConfigFile(config: Config, db: Database.Database): void {
+  // 条件注释：遍历所有工具，检查是否有 cache 配置
+  for (const [toolName, toolConfig] of Object.entries(config.tools)) {
+    // 条件注释：工具配置中有 cache 字段时同步到数据库
+    if (toolConfig.cache && toolConfig.cache.enabled) {
+      const enabled = toolConfig.cache.enabled ? 1 : 0;
+      const ttl = toolConfig.cache.ttl ?? 60000;
+
+      try {
+        db.prepare(`
+          INSERT INTO tool_cache_configs (tool_name, enabled, ttl, created_at, updated_at)
+          VALUES (?, ?, ?, datetime('now'), datetime('now'))
+        `).run(toolName, enabled, ttl);
+
+        logger.info('[工具缓存] Synced tool cache config from config file', { toolName, enabled, ttl });
+      } catch (error) {
+        logger.error('[工具缓存] Failed to sync tool cache config', { error, toolName });
+      }
+    } else {
+      // 工具配置中无 cache 字段，跳过
     }
   }
 }
