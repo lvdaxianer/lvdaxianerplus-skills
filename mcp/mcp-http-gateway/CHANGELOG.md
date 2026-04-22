@@ -72,6 +72,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 新增 config-version.handler.ts 路由处理器
   - 新增 config_versions 数据库表
 
+- ✨ **灰度发布（Canary Release）**
+  - 新增 canary.ts 灰度发布模块
+  - 灰度策略：按百分比（percentage）、按用户（user）、按工具（tool）
+  - 灰度状态：running、paused、completed、rolled_back
+  - 灰度监控：实时监控灰度效果（请求数、错误率、耗时）
+  - 灰度回滚：快速回滚到基线版本
+  - 自动回滚阈值：错误率超过阈值自动回滚
+  - Dashboard API：`/api/canary`、`/api/canary/list`、`/api/canary/:id`、`/api/canary/create`、`/api/canary/pause`、`/api/canary/resume`、`/api/canary/complete`、`/api/canary/rollback`、`/api/canary/metrics`
+  - 新增 CanaryRelease、CanaryStrategy、CanaryMetrics、CanaryOptions 类型
+  - 新增 canary.handler.ts 路由处理器
+  - 新增 canary_releases、canary_metrics 数据库表
+
 - 📝 **文档更新**
   - 更新 README 功能表格，添加模板转换和链路追踪相关条目
   - 更新 CHANGELOG 版本记录

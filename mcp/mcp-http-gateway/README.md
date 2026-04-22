@@ -537,6 +537,20 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
 | `/api/config-version/rollback` | 回滚配置到指定版本 |
 | `/api/config-version/export` | 导出配置版本 |
 
+### 灰度发布 API
+
+| 端点 | 说明 |
+|------|------|
+| `/api/canary` | 灰度发布统计 |
+| `/api/canary/list` | 灰度发布列表 |
+| `/api/canary/:id` | 获取指定灰度发布详情 |
+| `/api/canary/create` | 创建灰度发布 |
+| `/api/canary/pause` | 暂停灰度发布 |
+| `/api/canary/resume` | 恢复灰度发布 |
+| `/api/canary/complete` | 完成灰度发布 |
+| `/api/canary/rollback` | 回滚灰度发布 |
+| `/api/canary/metrics` | 获取灰度指标 |
+
 ---
 
 ## 故障排查

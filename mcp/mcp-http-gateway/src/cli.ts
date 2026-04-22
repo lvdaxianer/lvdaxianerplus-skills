@@ -20,6 +20,7 @@ import { initConcurrency } from './features/concurrency.js';
 import { initTrace } from './features/trace.js';
 import { initAlert } from './features/alert.js';
 import { initConfigVersion } from './features/config-version.js';
+import { initCanary } from './features/canary.js';
 import { setLogLevel, initFileLogging } from './middleware/logger.js';
 import { logger } from './middleware/logger.js';
 import { initDatabase, closeDatabase, cleanOldRecords, getDefaultDbPath } from './database/connection.js';
@@ -187,6 +188,11 @@ async function main(): Promise<void> {
   // 条件：配置版本控制默认启用
   initConfigVersion({ enabled: true });
   logger.info('[启动] Config version control initialized');
+
+  // Initialize Canary Release handler
+  // 条件：灰度发布默认启用
+  initCanary({ enabled: true });
+  logger.info('[启动] Canary release initialized');
 
   logger.info('[启动] MCP HTTP Gateway starting...');
   logger.info('[启动] Loaded tools', { count: Object.keys(config.tools).length });

@@ -60,6 +60,7 @@ import { getTimeoutRoutes } from './handlers/timeout.handler.js';
 import { getTraceRoutes } from './handlers/trace.handler.js';
 import { getAlertRoutes } from './handlers/alert.handler.js';
 import { getConfigVersionRoutes } from './handlers/config-version.handler.js';
+import { getCanaryRoutes } from './handlers/canary.handler.js';
 
 /**
  * HTTP 服务器配置选项
@@ -101,6 +102,7 @@ function registerAllRoutes(router: RouterStrategyTable, config: Config): void {
   router.registerAll(getTimeoutRoutes(config));
   router.registerAll(getTraceRoutes());
   router.registerAll(getConfigVersionRoutes(config));
+  router.registerAll(getCanaryRoutes(config));
 
   // 加载工具缓存配置
   // 条件注释：传入 config 参数，首次启动时同步配置文件到数据库
