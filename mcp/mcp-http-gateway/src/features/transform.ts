@@ -406,6 +406,12 @@ function deleteNestedValue(obj: Record<string, unknown>, path: string): void {
     return;
   }
 
+  // 条件注释：路径只有一个部分时直接删除顶层字段
+  if (parts.length === 0) {
+    delete obj[lastKey];
+    return;
+  }
+
   // 条件注释：获取父对象
   const parent = getNestedValue(obj, parts.join('.'));
 
@@ -476,11 +482,18 @@ function renameNestedField(
   deleteNestedValue(obj, oldPath);
 
   // 条件注释：设置新字段（在同层级）
-  const parentPath = oldPath.split('.').slice(0, -1).join('.');
-  const parent = parentPath ? getNestedValue(obj, parentPath) : obj;
+  const parts = oldPath.split('.');
+  const parentPath = parts.length > 1 ? parts.slice(0, -1).join('.') : '';
 
-  if (typeof parent === 'object' && parent !== null) {
-    (parent as Record<string, unknown>)[newName] = value;
+  // 条件注释：父路径为空时直接在顶层对象设置
+  if (parentPath === '') {
+    obj[newName] = value;
+  } else {
+    const parent = getNestedValue(obj, parentPath);
+
+    if (typeof parent === 'object' && parent !== null) {
+      (parent as Record<string, unknown>)[newName] = value;
+    }
   }
 }
 
