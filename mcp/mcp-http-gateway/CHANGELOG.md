@@ -59,6 +59,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 新增 alert.handler.ts 路由处理器
   - 新增 alert_history 数据库表
 
+- ✨ **配置版本控制（Config Version Control）**
+  - 新增 config-version.ts 配置版本模块
+  - 配置变更记录：版本号、变更内容、变更时间、变更人
+  - 配置回滚：支持回滚到指定版本
+  - 配置比较：比较不同版本的差异
+  - 配置导出：导出指定版本的配置
+  - 最大版本数限制：自动清理旧版本
+  - 配置内容校验和：防止篡改
+  - Dashboard API：`/api/config-version`、`/api/config-version/list`、`/api/config-version/:version`、`/api/config-version/compare`、`/api/config-version/rollback`
+  - 新增 ConfigVersion、ConfigVersionOptions 类型
+  - 新增 config-version.handler.ts 路由处理器
+  - 新增 config_versions 数据库表
+
 - 📝 **文档更新**
   - 更新 README 功能表格，添加模板转换和链路追踪相关条目
   - 更新 CHANGELOG 版本记录

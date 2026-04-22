@@ -526,6 +526,17 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
 | `/api/alert/channels` | 告警渠道列表 |
 | `/api/alert/cleanup` | 清理过期告警历史 |
 
+### 配置版本控制 API
+
+| 端点 | 说明 |
+|------|------|
+| `/api/config-version` | 版本控制统计 |
+| `/api/config-version/list` | 版本列表 |
+| `/api/config-version/:version` | 获取指定版本配置 |
+| `/api/config-version/compare` | 比较版本差异 |
+| `/api/config-version/rollback` | 回滚配置到指定版本 |
+| `/api/config-version/export` | 导出配置版本 |
+
 ---
 
 ## 故障排查
