@@ -4,6 +4,27 @@
 
 ---
 
+## 功能概览
+
+| 功能类别 | 核心能力 | 说明 |
+|----------|----------|------|
+| **请求转发** | HTTP REST 转发 | 将 MCP 工具调用转发到后端 HTTP API，支持 GET/POST/PUT/DELETE |
+| **容灾机制** | 熔断器 (Circuit Breaker) | 防止故障扩散，CLOSED/OPEN/HALF_OPEN 状态流转 |
+| **容灾机制** | 降级策略 (Fallback) | 缓存兜底 + Mock 兜底，确保用户获得响应 |
+| **容灾机制** | 尝试次数限制 | 限制可选参数工具的尝试次数，避免浪费 token |
+| **缓存机制** | LRU 缓存 | 缓存 GET 请求响应，支持 TTL 和工具级配置 |
+| **缓存机制** | TTL=0 永不过期 | 用于降级场景，缓存数据永久保留 |
+| **Mock 模式** | 全局 Mock | 全局开关，所有请求返回 Mock 数据 |
+| **Mock 模式** | 工具级 Mock | 单个工具 Mock 配置，支持静态/动态/AI 生成 |
+| **日志记录** | SQLite 日志 | 请求、响应、错误日志完整记录 |
+| **日志记录** | Dashboard 面板 | 实时监控、日志查询、配置管理 |
+| **配置管理** | 工具级配置持久化 | 缓存/Mock 配置持久化到 SQLite |
+| **配置管理** | 配置优先级 | CLI > SQLite > 配置文件 > 默认值 |
+| **传输模式** | STDIO 模式 | Claude Code 自动管理进程 |
+| **传输模式** | SSE 模式 | 持久连接，避免端口冲突（推荐） |
+
+---
+
 ## MCP 配置方式
 
 ### 方式一：SSE 模式（推荐，持久连接）
@@ -85,9 +106,42 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
 
 ---
 
-## 核心能力
+## 核心能力详解
 
-### 1. 熔断器（Circuit Breaker）
+### 1. HTTP 请求转发
+
+将 MCP 工具调用转发到后端 HTTP REST API，支持完整的 HTTP 方法。
+
+**支持方法**：GET、POST、PUT、DELETE、PATCH
+
+**路径模板**：支持 `{param}` 动态路径参数
+
+```json
+{
+  "getUser": {
+    "method": "GET",
+    "path": "/user/{userId}",
+    "queryParams": {
+      "userId": { "description": "用户ID", "type": "string", "required": true }
+    }
+  }
+}
+```
+
+**请求头管理**：支持自定义请求头和 Token 认证
+
+```json
+{
+  "tokens": {
+    "default": "your-api-token",
+    "admin": "admin-api-token"
+  }
+}
+```
+
+---
+
+### 2. 熔断器（Circuit Breaker）
 
 防止故障扩散，保护后端服务稳定性。
 
@@ -109,9 +163,20 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
 
 ---
 
-### 2. 降级策略（Fallback）
+### 3. 降级策略（Fallback）
 
-服务失败时的兜底机制，确保用户获得响应。
+**触发场景**：
+- 后端服务不可用（超时、连接失败）
+- 熔断器处于 OPEN 状态
+- HTTP 状态码 ≥ 500
+
+**降级链路**：
+
+```
+请求失败 → 缓存兜底（忽略 TTL） → Mock 兜底 → 返回错误
+```
+
+**配置示例**：
 
 ```json
 {
@@ -123,14 +188,14 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
 }
 ```
 
-**降级链路**：
-```
-真实服务 → 失败 → 缓存（忽略 TTL） → 失败 → Mock → 失败 → 错误
-```
+**降级优先级**：
+1. 优先使用缓存数据（即使过期）
+2. 缓存不存在时使用 Mock 数据
+3. Mock 不存在时返回错误信息
 
 ---
 
-### 3. 缓存机制（Cache）
+### 4. 缓存机制（Cache）
 
 缓存 GET 请求响应，用于降级备用（非查询加速）。
 
@@ -143,6 +208,8 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
   }
 }
 ```
+
+**特殊配置**：`ttl=0` 表示永不过期，适用于降级场景。
 
 **工具级缓存配置**（优先级高于全局配置）：
 
@@ -162,7 +229,7 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
 
 ---
 
-### 4. Mock 模式（测试模拟）
+### 5. Mock 模式（测试模拟）
 
 支持全局 Mock 和工具级 Mock，用于测试和降级。
 
@@ -188,7 +255,7 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
 
 ---
 
-### 5. SQLite 日志记录
+### 6. SQLite 日志记录
 
 完整记录 MCP 工具调用的请求和响应详情。
 
@@ -209,7 +276,7 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
 
 ---
 
-### 6. Dashboard 监控面板
+### 7. Dashboard 监控面板
 
 实时监控 MCP 工具调用状态。
 
@@ -224,7 +291,7 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
 
 ---
 
-### 7. 工具级配置持久化
+### 8. 工具级配置持久化
 
 工具级缓存、Mock 配置持久化到 SQLite，优先级机制：
 
@@ -245,7 +312,7 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
 
 ---
 
-### 8. 尝试次数限制（Attempt Tracking）
+### 9. 尝试次数限制（Attempt Tracking）
 
 限制大模型对可选参数工具的尝试次数，避免浪费 token。
 
