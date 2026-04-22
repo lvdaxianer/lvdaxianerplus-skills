@@ -383,6 +383,20 @@ export interface ConcurrencyConfig {
  * @author lvdaxianerplus
  * @date 2026-04-22
  */
+/**
+ * 链路追踪配置
+ *
+ * 定义请求追踪策略，用于分布式追踪和日志关联。
+ *
+ * @param enabled - 是否启用链路追踪（默认 true）
+ * @param headerName - Trace ID HTTP 头名称（默认 X-Trace-ID）
+ * @param generateShort - 是否生成短 ID（默认 false，使用完整 UUID）
+ * @param includeInResponse - 是否在响应头中返回 Trace ID（默认 true）
+ * @param propagateToBackend - 是否向后端传递 Trace ID（默认 true）
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-22
+ */
 export interface TraceConfig {
   enabled: boolean;
   headerName?: string;
@@ -390,3 +404,94 @@ export interface TraceConfig {
   includeInResponse?: boolean;
   propagateToBackend?: boolean;
 }
+
+/**
+ * 告警通知渠道配置
+ *
+ * 定义告警通知发送方式。
+ *
+ * @param type - 渠道类型：email/slack/dingtalk/wechat/webhook
+ * @param enabled - 是否启用此渠道
+ * @param config - 渠道特定配置
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-22
+ */
+export interface AlertChannelConfig {
+  type: 'email' | 'slack' | 'dingtalk' | 'wechat' | 'webhook';
+  enabled: boolean;
+  config?: Record<string, unknown>;
+}
+
+/**
+ * 告警规则配置
+ *
+ * 定义触发告警的条件和阈值。
+ *
+ * @param type - 规则类型：circuitBreaker/rateLimit/concurrency/errorRate/timeout
+ * @param enabled - 是否启用此规则
+ * @param threshold - 触发阈值
+ * @param cooldown - 告警冷却时间（毫秒，防止重复告警）
+ * @param severity - 告警严重级别：critical/warning/info
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-22
+ */
+export interface AlertRuleConfig {
+  type: 'circuitBreaker' | 'rateLimit' | 'concurrency' | 'errorRate' | 'timeout';
+  enabled: boolean;
+  threshold?: number;
+  cooldown?: number;
+  severity?: 'critical' | 'warning' | 'info';
+}
+
+/**
+ * 增强告警配置
+ *
+ * 定义告警通知策略，支持多种通知渠道和规则。
+ *
+ * @param enabled - 是否启用告警（默认 false）
+ * @param logDir - 告警日志目录（默认 ./logs，向后兼容）
+ * @param channels - 告警通知渠道列表
+ * @param rules - 告警规则列表
+ * @param templates - 告警消息模板映射
+ * @param historyRetention - 告警历史保留天数（默认 30）
+ * @param maxAlertsPerHour - 每小时最大告警数（防止告警风暴，默认 10）
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-22
+ */
+export interface EnhancedAlertConfig {
+  enabled: boolean;
+  logDir?: string;
+  channels?: AlertChannelConfig[];
+  rules?: AlertRuleConfig[];
+  templates?: Record<string, string>;
+  historyRetention?: number;
+  maxAlertsPerHour?: number;
+}
+
+/**
+ * 默认告警配置
+ */
+export const DEFAULT_ALERT: EnhancedAlertConfig = {
+  enabled: false,
+  logDir: './logs',
+  channels: [],
+  rules: [
+    { type: 'circuitBreaker', enabled: true, cooldown: 60000, severity: 'critical' },
+    { type: 'rateLimit', enabled: true, threshold: 100, cooldown: 30000, severity: 'warning' },
+    { type: 'concurrency', enabled: true, threshold: 50, cooldown: 30000, severity: 'warning' },
+    { type: 'errorRate', enabled: true, threshold: 10, cooldown: 60000, severity: 'critical' },
+    { type: 'timeout', enabled: true, threshold: 5, cooldown: 30000, severity: 'warning' },
+  ],
+  templates: {
+    circuitBreaker: '🔴 熔断器告警：{tool} 状态变更 {state}，连续失败 {failures} 次',
+    rateLimit: '⚠️ 限流告警：{tool} 请求被拒绝，剩余令牌 {remaining}',
+    concurrency: '⚠️ 并发告警：活跃请求 {active}/{max}，队列长度 {queue}',
+    errorRate: '🔴 错误率告警：{tool} 错误率 {rate}%，超过阈值 {threshold}%',
+    timeout: '⚠️ 超时告警：{tool} 请求超时，耗时 {duration}ms',
+  },
+  historyRetention: 30,
+  maxAlertsPerHour: 10,
+};

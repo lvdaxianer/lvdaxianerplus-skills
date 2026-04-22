@@ -18,6 +18,7 @@ import { initCache } from './features/cache.js';
 import { initRateLimit } from './features/rate-limit.js';
 import { initConcurrency } from './features/concurrency.js';
 import { initTrace } from './features/trace.js';
+import { initAlert } from './features/alert.js';
 import { setLogLevel, initFileLogging } from './middleware/logger.js';
 import { logger } from './middleware/logger.js';
 import { initDatabase, closeDatabase, cleanOldRecords, getDefaultDbPath } from './database/connection.js';
@@ -170,6 +171,15 @@ async function main(): Promise<void> {
   logger.info('[启动] Trace initialized', {
     enabled: traceConfig.enabled,
     headerName: traceConfig.headerName,
+  });
+
+  // Initialize Alert handler
+  // 条件：告警配置存在时初始化告警管理器
+  // 使用默认配置合并用户配置
+  const alertConfig = config.alert ?? { enabled: false };
+  initAlert(alertConfig);
+  logger.info('[启动] Alert initialized', {
+    enabled: alertConfig.enabled,
   });
 
   logger.info('[启动] MCP HTTP Gateway starting...');

@@ -58,6 +58,7 @@ import { getRateLimitRoutes } from './handlers/rate-limit.handler.js';
 import { getConcurrencyRoutes } from './handlers/concurrency.handler.js';
 import { getTimeoutRoutes } from './handlers/timeout.handler.js';
 import { getTraceRoutes } from './handlers/trace.handler.js';
+import { getAlertRoutes } from './handlers/alert.handler.js';
 
 /**
  * HTTP 服务器配置选项
@@ -90,7 +91,7 @@ function registerAllRoutes(router: RouterStrategyTable, config: Config): void {
   router.registerAll(getToolsRoutes(config));
   router.registerAll(getMockRoutes());
   router.registerAll(getConfigRoutes(config));
-  router.registerAll(getAlertsRoutes());
+  router.registerAll(getAlertRoutes(config));
   router.registerAll(getAuditRoutes());
   router.registerAll(getFallbackConditionsRoutes());
   router.registerAll(getToolCacheRoutes());

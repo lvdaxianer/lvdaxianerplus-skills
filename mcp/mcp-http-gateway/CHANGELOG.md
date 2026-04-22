@@ -46,6 +46,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 新增 ComponentStatus、HealthCheckResponse、DetailedHealthResponse 类型
   - 新增 health.handler.ts 路由处理器
 
+- ✨ **告警通知（Alert Notification）**
+  - 新增 alert.ts 告警模块
+  - 支持多种通知渠道：Webhook、Slack、钉钉、企业微信
+  - 告警规则：熔断器状态变更、限流拒绝、并发超限、错误率阈值、超时
+  - 告警冷却机制：防止重复告警
+  - 告警风暴防护：每小时最大告警数限制
+  - 告警历史记录：SQLite 持久化
+  - 告警模板支持自定义
+  - Dashboard API：`/api/alert`、`/api/alert/history`、`/api/alert/rules`、`/api/alert/channels`
+  - 新增 EnhancedAlertConfig、AlertChannelConfig、AlertRuleConfig 类型
+  - 新增 alert.handler.ts 路由处理器
+  - 新增 alert_history 数据库表
+
 - 📝 **文档更新**
   - 更新 README 功能表格，添加模板转换和链路追踪相关条目
   - 更新 CHANGELOG 版本记录

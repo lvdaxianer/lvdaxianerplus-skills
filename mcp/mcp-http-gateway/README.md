@@ -515,6 +515,17 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
 | `/health/live` | 存活状态（K8s Live Probe） |
 | `/health/startup` | 启动状态（K8s Startup Probe） |
 
+### 告警管理 API
+
+| 端点 | 说明 |
+|------|------|
+| `/api/alert` | 告警配置和统计 |
+| `/api/alert/history` | 告警历史列表（支持分页、类型过滤） |
+| `/api/alert/config` | 告警配置管理 |
+| `/api/alert/rules` | 告警规则列表 |
+| `/api/alert/channels` | 告警渠道列表 |
+| `/api/alert/cleanup` | 清理过期告警历史 |
+
 ---
 
 ## 故障排查

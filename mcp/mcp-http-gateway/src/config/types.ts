@@ -47,6 +47,9 @@ export {
   HotReloadConfig,
   BackupConfig,
   AlertConfig,
+  EnhancedAlertConfig,
+  AlertChannelConfig,
+  AlertRuleConfig,
   AuditConfig,
   RateLimitConfig,
   ToolRateLimitConfig,
@@ -90,6 +93,7 @@ import {
   HotReloadConfig,
   BackupConfig,
   AlertConfig,
+  EnhancedAlertConfig,
   AuditConfig,
   RateLimitConfig,
   ConcurrencyConfig,
@@ -154,7 +158,7 @@ export interface Config {
   compression?: CompressionConfig;
   hotReload?: HotReloadConfig;
   backup?: BackupConfig;
-  alert?: AlertConfig;
+  alert?: EnhancedAlertConfig;
   audit?: AuditConfig;
   mock?: MockConfig;
   fallback?: FallbackConfig;
@@ -341,16 +345,12 @@ export const DEFAULT_BACKUP: BackupConfig = {
 };
 
 /**
- * 默认告警配置
+ * 默认告警配置（从 server-config-types.ts 导入）
  *
  * @author lvdaxianerplus
- * @date 2026-04-19
+ * @date 2026-04-22
  */
-export const DEFAULT_ALERT: AlertConfig = {
-  enabled: true,
-  logDir: './logs',
-  errorRateThreshold: 10,
-};
+export { DEFAULT_ALERT } from './server-config-types.js';
 
 /**
  * 默认审计配置
