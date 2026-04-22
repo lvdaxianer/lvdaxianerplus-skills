@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- v1.2.0 SSE模式、缓存修复、配置优先级 (3df0c56)
 
 ### Changed
 - 更新变更日志 (1c71c17)
