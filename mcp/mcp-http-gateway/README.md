@@ -1,48 +1,50 @@
 # MCP HTTP Gateway
 
-一个基于 MCP 协议的 HTTP 网关服务，将 LLM 工具调用请求转发到 HTTP REST 接口。
+[中文文档](README_CN.md)
+
+A HTTP gateway service based on MCP protocol that forwards LLM tool call requests to HTTP REST interfaces.
 
 ---
 
-## 功能概览
+## Features Overview
 
-| 功能类别 | 核心能力 | 说明 |
-|----------|----------|------|
-| **请求转发** | HTTP REST 转发 | 将 MCP 工具调用转发到后端 HTTP API，支持 GET/POST/PUT/DELETE |
-| **请求转发** | 增强模板转换 | 变量替换、嵌套访问、表达式计算、默认值填充 |
-| **请求转发** | 链路追踪 ID | 唯一 Trace ID，日志关联，响应头返回，后端传递 |
-| **容灾机制** | 熔断器 (Circuit Breaker) | 防止故障扩散，CLOSED/OPEN/HALF_OPEN 状态流转 |
-| **容灾机制** | 降级策略 (Fallback) | 缓存兜底 + Mock 兜底，确保用户获得响应 |
-| **容灾机制** | 尝试次数限制 | 限制可选参数工具的尝试次数，避免浪费 token |
-| **流量控制** | 请求限流 (Rate Limit) | 令牌桶/滑动窗口算法，防止后端被压垮 |
-| **流量控制** | 工具级限流 | 单个工具独立限流配置，优先级高于全局 |
-| **流量控制** | 并发控制 (Concurrency) | 最大并发数限制 + 等待队列，防止资源耗尽 |
-| **流量控制** | 队列超时 | 等待超时自动返回错误，避免无限等待 |
-| **流量控制** | 超时强制中断 | AbortController 强制中断，防止请求挂起 |
-| **流量控制** | 工具级超时 | 单个工具超时配置，优先级高于全局 |
-| **缓存机制** | LRU 缓存 | 缓存 GET 请求响应，支持 TTL 和工具级配置 |
-| **缓存机制** | TTL=0 永不过期 | 用于降级场景，缓存数据永久保留 |
-| **Mock 模式** | 全局 Mock | 全局开关，所有请求返回 Mock 数据 |
-| **Mock 模式** | 工具级 Mock | 单个工具 Mock 配置，支持静态/动态/AI 生成 |
-| **日志记录** | SQLite 日志 | 请求、响应、错误日志完整记录 |
-| **日志记录** | Dashboard 面板 | 实时监控、日志查询、配置管理 |
-| **日志记录** | Trace 日志 | 链路追踪日志，支持按 ID/工具查询 |
-| **配置管理** | 工具级配置持久化 | 缓存/Mock 配置持久化到 SQLite |
-| **配置管理** | 配置优先级 | CLI > SQLite > 配置文件 > 默认值 |
-| **传输模式** | STDIO 模式 | Claude Code 自动管理进程 |
-| **传输模式** | SSE 模式 | 持久连接，避免端口冲突（推荐） |
+| Category | Capability | Description |
+|----------|------------|-------------|
+| **Request Forwarding** | HTTP REST Forwarding | Forward MCP tool calls to backend HTTP API, support GET/POST/PUT/DELETE |
+| **Request Forwarding** | Enhanced Template Transform | Variable replacement, nested access, expression calculation, default values |
+| **Request Forwarding** | Trace ID | Unique Trace ID, log correlation, response header, backend propagation |
+| **Resilience** | Circuit Breaker | Prevent cascading failures, CLOSED/OPEN/HALF_OPEN state flow |
+| **Resilience** | Fallback Strategy | Cache fallback + Mock fallback, ensure user gets response |
+| **Resilience** | Attempt Tracking | Limit attempts for optional parameter tools, save tokens |
+| **Traffic Control** | Rate Limit | Token bucket/sliding window algorithms, protect backend |
+| **Traffic Control** | Tool-level Rate Limit | Independent rate limit per tool, higher priority than global |
+| **Traffic Control** | Concurrency Control | Max concurrent limit + waiting queue, prevent resource exhaustion |
+| **Traffic Control** | Queue Timeout | Auto return error on timeout, avoid infinite wait |
+| **Traffic Control** | Timeout Abort | AbortController force interrupt, prevent request hanging |
+| **Traffic Control** | Tool-level Timeout | Per-tool timeout config, higher priority than global |
+| **Cache** | LRU Cache | Cache GET request responses, support TTL and tool-level config |
+| **Cache** | TTL=0 Never Expire | For fallback scenarios, cache data persists forever |
+| **Mock Mode** | Global Mock | Global switch, all requests return Mock data |
+| **Mock Mode** | Tool-level Mock | Per-tool Mock config, support static/dynamic/AI generation |
+| **Logging** | SQLite Logging | Complete request/response/error logs |
+| **Logging** | Dashboard Panel | Real-time monitoring, log query, config management |
+| **Logging** | Trace Logs | Trace logs, query by ID/tool |
+| **Config Management** | Tool-level Config Persistence | Cache/Mock configs persisted to SQLite |
+| **Config Management** | Config Priority | CLI > SQLite > Config File > Defaults |
+| **Transport Mode** | STDIO Mode | Claude Code auto-manages process |
+| **Transport Mode** | SSE Mode | Persistent connection, avoid port conflicts (Recommended) |
 
 ---
 
-## MCP 配置方式
+## MCP Configuration
 
-### 方式一：SSE 模式（推荐，持久连接）
+### Option 1: SSE Mode (Recommended, Persistent Connection)
 
-**优点**：一次启动，多次会话共享，避免端口冲突。
+**Advantages**: One startup, shared across multiple sessions, avoid port conflicts.
 
-#### 本地项目配置
+#### Local Project Config
 
-在项目根目录创建 `.mcp.json`：
+Create `.mcp.json` in project root:
 
 ```json
 {
@@ -50,20 +52,20 @@
     "http-gateway": {
       "type": "sse",
       "url": "http://localhost:11113/sse",
-      "description": "HTTP API 网关"
+      "description": "HTTP API Gateway"
     }
   }
 }
 ```
 
-启动服务：
+Start service:
 
 ```bash
 cd mcp/mcp-http-gateway
 node dist/cli.js --transport=sse --sse-port=11113 test.tools.filtered.json
 ```
 
-#### npx 方式配置
+#### npx Config
 
 ```json
 {
@@ -76,17 +78,17 @@ node dist/cli.js --transport=sse --sse-port=11113 test.tools.filtered.json
 }
 ```
 
-启动命令：
+Start command:
 
 ```bash
 npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools.json
 ```
 
-### 方式二：STDIO 模式（每次会话启动新进程）
+### Option 2: STDIO Mode (New Process per Session)
 
-**优点**：无需手动启动，Claude Code 自动管理。
+**Advantages**: No manual startup, Claude Code auto-manages.
 
-#### 本地项目配置
+#### Local Project Config
 
 ```json
 {
@@ -100,7 +102,7 @@ npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /p
 }
 ```
 
-#### npx 方式配置
+#### npx Config
 
 ```json
 {
@@ -115,15 +117,15 @@ npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /p
 
 ---
 
-## 核心能力详解
+## Core Capabilities
 
-### 1. HTTP 请求转发
+### 1. HTTP Request Forwarding
 
-将 MCP 工具调用转发到后端 HTTP REST API，支持完整的 HTTP 方法。
+Forward MCP tool calls to backend HTTP REST API with full HTTP methods support.
 
-**支持方法**：GET、POST、PUT、DELETE、PATCH
+**Supported Methods**: GET, POST, PUT, DELETE, PATCH
 
-**路径模板**：支持 `{param}` 动态路径参数
+**Path Template**: Support `{param}` dynamic path parameters
 
 ```json
 {
@@ -131,13 +133,13 @@ npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /p
     "method": "GET",
     "path": "/user/{userId}",
     "queryParams": {
-      "userId": { "description": "用户ID", "type": "string", "required": true }
+      "userId": { "description": "User ID", "type": "string", "required": true }
     }
   }
 }
 ```
 
-**请求头管理**：支持自定义请求头和 Token 认证
+**Header Management**: Support custom headers and Token authentication
 
 ```json
 {
@@ -150,77 +152,77 @@ npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /p
 
 ---
 
-### 2. 熔断器（Circuit Breaker）
+### 2. Circuit Breaker
 
-防止故障扩散，保护后端服务稳定性。
+Prevent cascading failures, protect backend service stability.
 
 ```json
 {
   "circuitBreaker": {
     "enabled": true,
-    "failureThreshold": 5,    // 连续失败 5 次触发熔断
-    "successThreshold": 2,    // 连续成功 2 次恢复
-    "halfOpenTime": 30000     // 熔断后 30s 尝试恢复
+    "failureThreshold": 5,    // Trigger after 5 consecutive failures
+    "successThreshold": 2,    // Recover after 2 consecutive successes
+    "halfOpenTime": 30000     // Try recovery after 30s
   }
 }
 ```
 
-**状态流转**：
-- `CLOSED` → 正常状态，请求正常转发
-- `OPEN` → 熔断状态，拒绝所有请求，触发降级
-- `HALF_OPEN` → 半开状态，允许少量请求探测恢复
+**State Flow**:
+- `CLOSED` → Normal state, requests forwarded normally
+- `OPEN` → Circuit breaker state, reject all requests, trigger fallback
+- `HALF_OPEN` → Half-open state, allow limited requests to probe recovery
 
 ---
 
-### 3. 降级策略（Fallback）
+### 3. Fallback Strategy
 
-**触发场景**：
-- 后端服务不可用（超时、连接失败）
-- 熔断器处于 OPEN 状态
-- HTTP 状态码 ≥ 500
+**Trigger Scenarios**:
+- Backend service unavailable (timeout, connection failure)
+- Circuit breaker in OPEN state
+- HTTP status code ≥ 500
 
-**降级链路**：
+**Fallback Chain**:
 
 ```
-请求失败 → 缓存兜底（忽略 TTL） → Mock 兜底 → 返回错误
+Request Failed → Cache Fallback (ignore TTL) → Mock Fallback → Return Error
 ```
 
-**配置示例**：
+**Config Example**:
 
 ```json
 {
   "fallback": {
     "enabled": true,
-    "useExpiredCache": true,  // 使用过期缓存兜底
-    "useMockAsFallback": true // 使用 Mock 数据兜底
+    "useExpiredCache": true,  // Use expired cache as fallback
+    "useMockAsFallback": true // Use Mock data as fallback
   }
 }
 ```
 
-**降级优先级**：
-1. 优先使用缓存数据（即使过期）
-2. 缓存不存在时使用 Mock 数据
-3. Mock 不存在时返回错误信息
+**Fallback Priority**:
+1. Prefer cache data (even if expired)
+2. Use Mock data if cache doesn't exist
+3. Return error info if Mock doesn't exist
 
 ---
 
-### 4. 缓存机制（Cache）
+### 4. Cache Mechanism
 
-缓存 GET 请求响应，用于降级备用（非查询加速）。
+Cache GET request responses for fallback backup (not for query acceleration).
 
 ```json
 {
   "cache": {
     "enabled": true,
-    "ttl": 60000,     // 缓存有效期 60 秒
-    "maxSize": 1000   // 最大缓存条目数
+    "ttl": 60000,     // Cache TTL 60 seconds
+    "maxSize": 1000   // Max cache entries
   }
 }
 ```
 
-**特殊配置**：`ttl=0` 表示永不过期，适用于降级场景。
+**Special Config**: `ttl=0` means never expire, suitable for fallback scenarios.
 
-**工具级缓存配置**（优先级高于全局配置）：
+**Tool-level Cache Config** (higher priority than global):
 
 ```json
 {
@@ -228,7 +230,7 @@ npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /p
     "getUser": {
       "cache": {
         "enabled": true,
-        "ttl": 0,        // 0 表示永不过期（用于降级场景）
+        "ttl": 0,        // 0 means never expire (for fallback)
         "maxSize": 1000
       }
     }
@@ -238,14 +240,14 @@ npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /p
 
 ---
 
-### 5. Mock 模式（测试模拟）
+### 5. Mock Mode (Test Simulation)
 
-支持全局 Mock 和工具级 Mock，用于测试和降级。
+Support global Mock and tool-level Mock for testing and fallback.
 
 ```json
 {
   "mock": {
-    "enabled": true,   // 全局 Mock 开关
+    "enabled": true,   // Global Mock switch
     "mockData": {
       "getUser": {
         "enabled": true,
@@ -257,16 +259,16 @@ npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /p
 }
 ```
 
-**Mock 类型**：
-- **静态响应**：直接返回预设数据
-- **动态模板**：支持 `{param}`、`{timestamp}`、`{uuid}` 变量
-- **AI 生成**：通过 `aiHint` 语义提示生成模拟数据
+**Mock Types**:
+- **Static Response**: Return preset data directly
+- **Dynamic Template**: Support `{param}`, `{timestamp}`, `{uuid}` variables
+- **AI Generated**: Generate mock data via `aiHint` semantic hints
 
 ---
 
-### 6. SQLite 日志记录
+### 6. SQLite Logging
 
-完整记录 MCP 工具调用的请求和响应详情。
+Complete logging of MCP tool call requests and responses.
 
 ```json
 {
@@ -278,52 +280,52 @@ npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /p
 }
 ```
 
-**记录内容**：
-- **请求日志**：工具名、HTTP 方法、URL、请求头、请求体
-- **响应日志**：HTTP 状态码、响应体、耗时
-- **错误日志**：错误类型、错误堆栈
+**Log Content**:
+- **Request Logs**: Tool name, HTTP method, URL, headers, body
+- **Response Logs**: HTTP status code, body, duration
+- **Error Logs**: Error type, stack trace
 
 ---
 
-### 7. Dashboard 监控面板
+### 7. Dashboard Monitoring Panel
 
-实时监控 MCP 工具调用状态。
+Real-time monitoring of MCP tool call status.
 
-**访问地址**：`http://localhost:11112/dashboard`
+**Access URL**: `http://localhost:11112/dashboard`
 
-**功能**：
-- 工具调用统计（成功/失败率、Top 工具）
-- 请求日志查询（分页、按日期/工具筛选）
-- 缓存状态查看（条目数、TTL）
-- Mock 配置管理
-- 配置热更新（无需重启）
-
----
-
-### 8. 工具级配置持久化
-
-工具级缓存、Mock 配置持久化到 SQLite，优先级机制：
-
-| 场景 | 行为 |
-|------|------|
-| **首次启动**（数据库无配置） | 同步配置文件到 SQLite |
-| **后续启动**（数据库有配置） | 使用 SQLite 配置，**忽略配置文件** |
-
-**首次启动日志**：
-```
-[工具缓存] Database empty, syncing from config file
-```
-
-**后续启动日志**：
-```
-[工具缓存] Using database configs, ignoring config file
-```
+**Features**:
+- Tool call statistics (success/failure rate, Top tools)
+- Request log query (pagination, filter by date/tool)
+- Cache status view (entries, TTL)
+- Mock config management
+- Hot config update (no restart needed)
 
 ---
 
-### 9. 尝试次数限制（Attempt Tracking）
+### 8. Tool-level Config Persistence
 
-限制大模型对可选参数工具的尝试次数，避免浪费 token。
+Tool-level cache and Mock configs persisted to SQLite with priority mechanism:
+
+| Scenario | Behavior |
+|----------|----------|
+| **First Startup** (no DB config) | Sync config file to SQLite |
+| **Later Startup** (has DB config) | Use SQLite config, **ignore config file** |
+
+**First Startup Log**:
+```
+[Tool Cache] Database empty, syncing from config file
+```
+
+**Later Startup Log**:
+```
+[Tool Cache] Using database configs, ignoring config file
+```
+
+---
+
+### 9. Attempt Tracking
+
+Limit LLM attempts for optional parameter tools, save tokens.
 
 ```json
 {
@@ -335,111 +337,111 @@ npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /p
 }
 ```
 
-**返回增强**：失败时返回 `metadata` 字段：
+**Enhanced Response**: Return `metadata` field on failure:
 ```json
 {
-  "error": "服务不可用",
+  "error": "Service unavailable",
   "metadata": {
     "attempt_count": 2,
     "max_attempts": 3,
     "remaining_attempts": 1,
-    "suggested_action": "还可尝试 1 次，建议使用默认参数 domainId=1"
+    "suggested_action": "1 attempt left, suggest using default param domainId=1"
   }
 }
 ```
 
 ---
 
-### 10. 请求限流（Rate Limit）
+### 10. Rate Limit
 
-防止后端服务被大量 MCP 请求压垮，保护系统稳定性。
+Protect backend from being overwhelmed by massive MCP requests.
 
-**配置示例**：
+**Config Example**:
 
 ```json
 {
   "rateLimit": {
     "enabled": true,
-    "type": "tokenBucket",        // 或 "slidingWindow"
-    "globalLimit": 100,            // 全局每秒最大请求数
+    "type": "tokenBucket",        // or "slidingWindow"
+    "globalLimit": 100,            // Global max requests per second
     "toolLimits": {
-      "getUser": { "limit": 10, "window": 1000 },  // 工具级限流
+      "getUser": { "limit": 10, "window": 1000 },  // Tool-level rate limit
       "createOrder": { "limit": 5, "window": 1000 }
     }
   }
 }
 ```
 
-**算法对比**：
+**Algorithm Comparison**:
 
-| 算法 | 特点 | 适用场景 |
-|------|------|----------|
-| **令牌桶** | 允许突发流量，平滑处理 | 请求波动大、API 容错高 |
-| **滑动窗口** | 精确限流，无突发 | 严格限流、防止超载 |
+| Algorithm | Feature | Use Case |
+|-----------|---------|----------|
+| **Token Bucket** | Allow burst traffic, smooth handling | High request variance, tolerant API |
+| **Sliding Window** | Precise rate limit, no burst | Strict rate limit, prevent overload |
 
-**Dashboard API**：
+**Dashboard API**:
 
-| 端点 | 说明 |
-|------|------|
-| `/api/rate-limit` | 限流全局状态（剩余令牌、拒绝次数） |
-| `/api/rate-limit/tools` | 所有工具级限流状态 |
-| `/api/rate-limit/tools/:name` | 单个工具限流状态 |
+| Endpoint | Description |
+|----------|-------------|
+| `/api/rate-limit` | Rate limit global status (remaining tokens, reject count) |
+| `/api/rate-limit/tools` | All tool-level rate limit status |
+| `/api/rate-limit/tools/:name` | Single tool rate limit status |
 
 ---
 
-### 11. 并发控制（Concurrency Control）
+### 11. Concurrency Control
 
-防止资源耗尽，控制同时执行的请求数量。
+Prevent resource exhaustion by controlling concurrent request count.
 
-**配置示例**：
+**Config Example**:
 
 ```json
 {
   "concurrency": {
     "enabled": true,
-    "maxConcurrent": 50,    // 最大并发请求数
-    "queueSize": 100,       // 等待队列大小
-    "queueTimeout": 30000   // 队列等待超时（毫秒）
+    "maxConcurrent": 50,    // Max concurrent requests
+    "queueSize": 100,       // Waiting queue size
+    "queueTimeout": 30000   // Queue wait timeout (ms)
   }
 }
 ```
 
-**工作流程**：
+**Workflow**:
 
 ```
-请求到达 → 活跃数 < 最大并发？ → 立即执行
-           ↓ 否
-         队列已满？ → 返回错误
-           ↓ 否
-         进入队列等待 → 超时？ → 返回超时错误
-           ↓ 否
-         槽位释放 → 唤醒执行
+Request arrives → Active < Max? → Execute immediately
+           ↓ No
+         Queue full? → Return error
+           ↓ No
+         Enter queue wait → Timeout? → Return timeout error
+           ↓ No
+         Slot released → Wake up and execute
 ```
 
-**Dashboard API**：
+**Dashboard API**:
 
-| 端点 | 说明 |
-|------|------|
-| `/api/concurrency` | 并发状态（活跃数、队列长度、超时次数） |
+| Endpoint | Description |
+|----------|-------------|
+| `/api/concurrency` | Concurrency status (active count, queue length, timeout count) |
 
 ---
 
-## CLI 参数
+## CLI Parameters
 
-| 参数 | 说明 |
-|------|------|
-| `--config <path>` | 配置文件路径（默认：./tools.json） |
-| `--transport <mode>` | 传输模式：stdio / sse（默认：stdio） |
-| `--sse-port <port>` | SSE 端口（默认：11113） |
-| `--http-port <port>` | HTTP/Dashboard 端口（默认：11112） |
-| `--sqlite` | 启用 SQLite 日志 |
-| `--sqlite-path <path>` | 指定 SQLite 数据库路径 |
+| Parameter | Description |
+|-----------|-------------|
+| `--config <path>` | Config file path (default: ./tools.json) |
+| `--transport <mode>` | Transport mode: stdio / sse (default: stdio) |
+| `--sse-port <port>` | SSE port (default: 11113) |
+| `--http-port <port>` | HTTP/Dashboard port (default: 11112) |
+| `--sqlite` | Enable SQLite logging |
+| `--sqlite-path <path>` | SQLite database path |
 
-> 📖 **完整参数说明**：参见 [CONFIG.md](CONFIG.md) 了解所有配置参数的详细说明、类型、是否可选及默认值。
+> 📖 **Full Parameter Reference**: See [CONFIG.md](CONFIG.md) for detailed parameter descriptions, types, optional/required, and defaults.
 
 ---
 
-## 最小配置示例
+## Minimal Config Example
 
 ```json
 {
@@ -449,12 +451,12 @@ npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /p
   },
   "tools": {
     "getUser": {
-      "description": "根据ID获取用户信息",
+      "description": "Get user info by ID",
       "method": "GET",
       "path": "/user/{userId}",
       "queryParams": {
         "userId": {
-          "description": "用户ID",
+          "description": "User ID",
           "type": "string",
           "required": true
         }
@@ -466,142 +468,142 @@ npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /p
 
 ---
 
-## API 端点列表
+## API Endpoints
 
-### 日志查询 API
+### Log Query API
 
-| 端点 | 说明 |
-|------|------|
-| `/api/logs/paginated` | 分页查询请求日志 |
-| `/api/errors` | 查询错误日志 |
-| `/api/trend` | 调用趋势（7 天） |
-| `/api/top-tools` | Top 工具统计 |
+| Endpoint | Description |
+|----------|-------------|
+| `/api/logs/paginated` | Paginated request log query |
+| `/api/errors` | Query error logs |
+| `/api/trend` | Call trend (7 days) |
+| `/api/top-tools` | Top tools statistics |
 
-### 缓存管理 API
+### Cache Management API
 
-| 端点 | 说明 |
-|------|------|
-| `/api/cache` | 缓存状态 |
-| `/api/cache/entries` | 缓存条目详情 |
-| `/api/cache/tools` | 工具级缓存配置列表 |
+| Endpoint | Description |
+|----------|-------------|
+| `/api/cache` | Cache status |
+| `/api/cache/entries` | Cache entry details |
+| `/api/cache/tools` | Tool-level cache config list |
 
-### Mock 管理 API
+### Mock Management API
 
-| 端点 | 说明 |
-|------|------|
-| `/api/mock` | 全局 Mock 开关 |
-| `/api/tools` | 工具列表（含 Mock 状态） |
-| `/api/tools/:name/mock` | 工具级 Mock 配置 |
+| Endpoint | Description |
+|----------|-------------|
+| `/api/mock` | Global Mock switch |
+| `/api/tools` | Tool list (with Mock status) |
+| `/api/tools/:name/mock` | Tool-level Mock config |
 
-### 限流管理 API
+### Rate Limit Management API
 
-| 端点 | 说明 |
-|------|------|
-| `/api/rate-limit` | 限流全局状态 |
-| `/api/rate-limit/tools` | 所有工具级限流状态 |
-| `/api/rate-limit/tools/:name` | 单个工具限流状态 |
+| Endpoint | Description |
+|----------|-------------|
+| `/api/rate-limit` | Rate limit global status |
+| `/api/rate-limit/tools` | All tool-level rate limit status |
+| `/api/rate-limit/tools/:name` | Single tool rate limit status |
 
-### 并发控制 API
+### Concurrency Control API
 
-| 端点 | 说明 |
-|------|------|
-| `/api/concurrency` | 并发控制状态（活跃数、队列长度） |
+| Endpoint | Description |
+|----------|-------------|
+| `/api/concurrency` | Concurrency status (active count, queue length) |
 
-### 健康检查 API
+### Health Check API
 
-| 端点 | 说明 |
-|------|------|
-| `/health` | 服务健康状态（7 个组件） |
-| `/health/detail` | 详细组件状态（含更多指标） |
-| `/health/ready` | 就绪状态（K8s Ready Probe） |
-| `/health/live` | 存活状态（K8s Live Probe） |
-| `/health/startup` | 启动状态（K8s Startup Probe） |
+| Endpoint | Description |
+|----------|-------------|
+| `/health` | Service health status (7 components) |
+| `/health/detail` | Detailed component status (more metrics) |
+| `/health/ready` | Ready status (K8s Ready Probe) |
+| `/health/live` | Live status (K8s Live Probe) |
+| `/health/startup` | Startup status (K8s Startup Probe) |
 
-### 告警管理 API
+### Alert Management API
 
-| 端点 | 说明 |
-|------|------|
-| `/api/alert` | 告警配置和统计 |
-| `/api/alert/history` | 告警历史列表（支持分页、类型过滤） |
-| `/api/alert/config` | 告警配置管理 |
-| `/api/alert/rules` | 告警规则列表 |
-| `/api/alert/channels` | 告警渠道列表 |
-| `/api/alert/cleanup` | 清理过期告警历史 |
+| Endpoint | Description |
+|----------|-------------|
+| `/api/alert` | Alert config and statistics |
+| `/api/alert/history` | Alert history list (pagination, type filter) |
+| `/api/alert/config` | Alert config management |
+| `/api/alert/rules` | Alert rules list |
+| `/api/alert/channels` | Alert channels list |
+| `/api/alert/cleanup` | Cleanup expired alert history |
 
-### 配置版本控制 API
+### Config Version Control API
 
-| 端点 | 说明 |
-|------|------|
-| `/api/config-version` | 版本控制统计 |
-| `/api/config-version/list` | 版本列表 |
-| `/api/config-version/:version` | 获取指定版本配置 |
-| `/api/config-version/compare` | 比较版本差异 |
-| `/api/config-version/rollback` | 回滚配置到指定版本 |
-| `/api/config-version/export` | 导出配置版本 |
+| Endpoint | Description |
+|----------|-------------|
+| `/api/config-version` | Version control statistics |
+| `/api/config-version/list` | Version list |
+| `/api/config-version/:version` | Get specific version config |
+| `/api/config-version/compare` | Compare version differences |
+| `/api/config-version/rollback` | Rollback config to specific version |
+| `/api/config-version/export` | Export config version |
 
-### 灰度发布 API
+### Canary Release API
 
-| 端点 | 说明 |
-|------|------|
-| `/api/canary` | 灰度发布统计 |
-| `/api/canary/list` | 灰度发布列表 |
-| `/api/canary/:id` | 获取指定灰度发布详情 |
-| `/api/canary/create` | 创建灰度发布 |
-| `/api/canary/pause` | 暂停灰度发布 |
-| `/api/canary/resume` | 恢复灰度发布 |
-| `/api/canary/complete` | 完成灰度发布 |
-| `/api/canary/rollback` | 回滚灰度发布 |
-| `/api/canary/metrics` | 获取灰度指标 |
+| Endpoint | Description |
+|----------|-------------|
+| `/api/canary` | Canary release statistics |
+| `/api/canary/list` | Canary release list |
+| `/api/canary/:id` | Get specific canary release details |
+| `/api/canary/create` | Create canary release |
+| `/api/canary/pause` | Pause canary release |
+| `/api/canary/resume` | Resume canary release |
+| `/api/canary/complete` | Complete canary release |
+| `/api/canary/rollback` | Rollback canary release |
+| `/api/canary/metrics` | Get canary metrics |
 
 ---
 
-## 故障排查
+## Troubleshooting
 
-### 问题：MCP 连接失败（Connection closed）
+### Issue: MCP Connection Failed (Connection closed)
 
-**STDIO 模式常见原因**：
-1. 端口冲突（每次会话启动新进程）
-2. 配置路径错误
-3. 入口文件错误
+**STDIO Mode Common Causes**:
+1. Port conflict (new process per session)
+2. Config path error
+3. Entry file error
 
-**解决方案**：使用 **SSE 模式**（推荐），一次启动，多次会话共享。
+**Solution**: Use **SSE Mode** (Recommended), one startup, shared across sessions.
 
-### 问题：SSE 连接失败（500 错误）
+### Issue: SSE Connection Failed (500 Error)
 
-**检查步骤**：
+**Check Steps**:
 ```bash
-# 确认服务已启动
+# Verify service started
 curl http://localhost:11112/health
 
-# 确认 SSE 端点可访问
+# Verify SSE endpoint accessible
 curl http://localhost:11113/sse
 ```
 
-### 问题：端口被占用
+### Issue: Port Occupied
 
 ```bash
-# 杀掉占用进程
+# Kill occupied process
 lsof -ti:11112 | xargs kill -9
 lsof -ti:11113 | xargs kill -9
 
-# 或修改端口
+# Or modify port
 node dist/cli.js --transport=sse --sse-port=11120 --http-port=11121 --config tools.json
 ```
 
 ---
 
-## 更新日志
+## Changelog
 
-> 查看 [CHANGELOG.md](CHANGELOG.md) 了解完整版本历史。
+> See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
-### v1.0.0 (2026-04-23) - 首次正式发布
+### v1.0.0 (2026-04-23) - Initial Release
 
-🎉 本版本为首个正式发布的稳定版本，包含完整的 MCP HTTP Gateway 功能集。
+🎉 This is the first stable release with complete MCP HTTP Gateway features.
 
-**版本策略**：偶数版本为稳定版，奇数版本为快速迭代版。
+**Version Strategy**: Even versions are stable releases, odd versions are rapid iteration releases.
 
 ---
 
-## 许可证
+## License
 
 MIT

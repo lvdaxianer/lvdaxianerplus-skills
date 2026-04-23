@@ -45,9 +45,12 @@
   "files": [
     "dist",
     "README.md",
+    "README_CN.md",
     "LICENSE",
     "CHANGELOG.md",
-    "CONFIG.md"
+    "CHANGELOG_EN.md",
+    "CONFIG.md",
+    "CONFIG_EN.md"
   ],
   "scripts": {
     "build": "tsc",

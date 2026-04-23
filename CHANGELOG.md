@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- 修正 README 更新日志为首次发布 (ef32dfe)
+
+- 修改包名为 @lvdaxianer/mcp-http-gateway (9bbad2c)
+
+### Changed
+- v1.0.0 首次正式发布 (77e4d4d)
+
+- 同步版本变更记录 (229c09c)
+
+### Changed
 - 添加 CONFIG.md 到 npm 发布文件列表 (387d99b)
 
 - 添加 CONFIG.md 配置参数详解文档 (84b9292)
