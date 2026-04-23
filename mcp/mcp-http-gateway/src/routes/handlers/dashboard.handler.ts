@@ -174,6 +174,7 @@ interface DashboardData {
   circuitBreakers: Record<string, { state: string; failures: number; successes: number }>;
   toolDescriptions: Record<string, string>;
   cache: { size: number; maxSize: number; ttl: number };
+  serverPort: number;
   logs?: Array<{
     timestamp: string;
     tool_name: string;

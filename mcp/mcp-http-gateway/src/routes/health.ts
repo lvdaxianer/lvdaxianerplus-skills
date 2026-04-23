@@ -22,6 +22,7 @@ import { getDatabase, getDatabaseStats } from '../database/connection.js';
 import { getRateLimitStatus } from '../features/rate-limit.js';
 import { getConcurrencyStatus } from '../features/concurrency.js';
 import { getActiveTracesCount, getTraceConfig } from '../features/trace.js';
+import { getHttpPort } from './http-server.js';
 
 /**
  * 健康检查响应类型
@@ -204,6 +205,7 @@ export interface DashboardData {
     duration?: number;
     type: 'request' | 'error';
   }>;
+  serverPort: number;
 }
 
 let startTime = Date.now();
@@ -591,5 +593,6 @@ export function handleDashboard(config: Config): DashboardData {
     cache: getCacheStats(),
     // 条件：从 SQLite 获取最近的请求记录（而非系统日志）
     logs: getRecentLogs(20),
+    serverPort: getHttpPort(),
   };
 }

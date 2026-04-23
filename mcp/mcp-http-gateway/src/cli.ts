@@ -206,9 +206,14 @@ async function main(): Promise<void> {
   const shouldStartHttpServer = cliArgs.httpEnabled || (!(metricsDisabled || healthCheckDisabled));
 
   if (shouldStartHttpServer) {
-    await startHttpServer({ config, port: cliArgs.httpPort, configPath: cliArgs.configPath });
-    logger.info('[启动] Dashboard available', { url: `http://localhost:${cliArgs.httpPort}/dashboard` });
-    logger.info('[启动] Health check available', { url: `http://localhost:${cliArgs.httpPort}/health` });
+    // 条件注释：启动 HTTP 服务，端口可能因冲突被自动调整
+    const httpResult = await startHttpServer({ config, port: cliArgs.httpPort, configPath: cliArgs.configPath });
+    const actualHttpPort = httpResult.port;
+    if (actualHttpPort !== cliArgs.httpPort) {
+      logger.warn('[启动] HTTP 端口已调整', { requested: cliArgs.httpPort, actual: actualHttpPort });
+    }
+    logger.info('[启动] Dashboard available', { url: `http://localhost:${actualHttpPort}/dashboard` });
+    logger.info('[启动] Health check available', { url: `http://localhost:${actualHttpPort}/health` });
   } else {
     // HTTP 服务禁用：跳过启动
     logger.info('[启动] HTTP server disabled by config');

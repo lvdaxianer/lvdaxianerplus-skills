@@ -15,9 +15,25 @@ import type { Config } from '../config/types.js';
 import { setStartTime } from './health.js';
 import { logger } from '../middleware/logger.js';
 import type { Server as HttpServer } from 'http';
+import { handlePortConflict } from '../utils/port-detector.js';
 
 // 全局保存 HTTP server 实例，用于 graceful shutdown
 let httpServer: HttpServer | null = null;
+
+// 全局保存实际使用的端口，用于 Dashboard 显示
+let actualHttpPort: number = 11112;
+
+/**
+ * 获取 HTTP 服务实际使用的端口
+ *
+ * @returns HTTP 服务端口
+ *
+ * @author lvdaxianerplus
+ * @date 2026-04-23
+ */
+export function getHttpPort(): number {
+  return actualHttpPort;
+}
 
 /**
  * Close HTTP server gracefully
@@ -173,7 +189,17 @@ function handleServerError(error: Error, res: import('http').ServerResponse): vo
  */
 export async function startHttpServer(options: HttpServerOptions): Promise<{ server: unknown; port: number }> {
   const { config, port: explicitPort, configPath: cp } = options;
-  const port = explicitPort ?? config.metrics?.port ?? config.healthCheck?.port ?? 11112;
+  const requestedPort = explicitPort ?? config.metrics?.port ?? config.healthCheck?.port ?? 11112;
+
+  // 处理端口冲突：自动杀死同类进程或查找下一个可用端口
+  const port = handlePortConflict(requestedPort);
+  if (port === null) {
+    logger.error('[HTTP服务] 无法绑定端口', { port: requestedPort });
+    throw new Error(`无法绑定端口 ${requestedPort}，端口被其他进程占用`);
+  }
+
+  // 保存实际使用的端口，用于 Dashboard 显示
+  actualHttpPort = port;
 
   // 设置配置路径
   setConfigPath(cp ?? './tools.json');
