@@ -107,7 +107,7 @@ npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /p
   "mcpServers": {
     "http-gateway": {
       "command": "node",
-      "args": ["mcp/mcp-http-gateway/dist/cli.js", "--config", "mcp/mcp-http-gateway/tools.json"],
+      "args": ["mcp/mcp-http-gateway/dist/cli.cjs", "--config", "mcp/mcp-http-gateway/tools.json"],
       "cwd": "/absolute/path/to/project/root"
     }
   }
@@ -599,7 +599,7 @@ lsof -ti:11112 | xargs kill -9
 lsof -ti:11113 | xargs kill -9
 
 # 或修改端口
-node dist/cli.js --transport=sse --sse-port=11120 --http-port=11121 --config tools.json
+node dist/cli.cjs --transport=sse --sse-port=11120 --http-port=11121 --config tools.json
 ```
 
 ---

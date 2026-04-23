@@ -42,7 +42,8 @@
     "CHANGELOG.md",
     "CHANGELOG_EN.md",
     "CONFIG.md",
-    "CONFIG_EN.md"
+    "CONFIG_EN.md",
+    "NPM_PUBLISH_CHECKLIST.md"
   ],
   "scripts": {
     "build": "esbuild src/cli.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/cli.cjs --external:better-sqlite3 --banner:js='#!/usr/bin/env node' --minify",
