@@ -65,12 +65,12 @@ async function initEjsRenderer(): Promise<void> {
       const fs = await import('fs');
 
       // 配置 EJS 渲染函数（使用 renderFile 支持 include）
-      // 模板文件位于 src/routes/templates（编译后需要指向正确位置）
-      // dist/routes/handlers -> ../ -> dist/routes -> ../ -> dist -> ../ -> mcp-http-gateway -> src/routes/templates
+      // esbuild 打包后 __dirname 指向 dist 目录
+      // 模板文件需要复制到 dist/templates
       const srcDir = join(__dirname, '..', '..', '..', 'src', 'routes', 'templates');
-      const distDir = join(__dirname, '..', 'templates');
-      // 条件注释：src 目录存在时使用，不存在时使用 dist 目录
-      templatesDirPath = fs.existsSync(srcDir) ? srcDir : distDir;
+      const distTemplatesDir = join(__dirname, 'templates');
+      // 条件注释：开发环境使用 src 目录，生产环境使用 dist/templates
+      templatesDirPath = fs.existsSync(srcDir) ? srcDir : distTemplatesDir;
       ejsRenderFile = async (templatePath: string, data: object) => {
         return renderFileFn(templatePath, data, {
           views: [templatesDirPath!],

@@ -35,6 +35,7 @@
   },
   "files": [
     "dist/cli.cjs",
+    "dist/templates",
     "docs",
     "README.md",
     "README_CN.md",
@@ -46,7 +47,7 @@
     "NPM_PUBLISH_CHECKLIST.md"
   ],
   "scripts": {
-    "build": "esbuild src/cli.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/cli.cjs --external:better-sqlite3 --banner:js='#!/usr/bin/env node' --minify",
+    "build": "esbuild src/cli.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/cli.cjs --external:better-sqlite3 --banner:js='#!/usr/bin/env node' --minify && cp -r src/routes/templates dist/templates",
     "start": "node dist/cli.cjs",
     "dev": "npm run build && node dist/cli.cjs",
     "test": "vitest run",
