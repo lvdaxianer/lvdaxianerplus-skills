@@ -79,7 +79,7 @@ node dist/cli.js --transport=sse --sse-port=11113 test.tools.filtered.json
 启动命令：
 
 ```bash
-npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools.json
+npx -y @lvdaxianer/mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools.json
 ```
 
 ### 方式二：STDIO 模式（每次会话启动新进程）
@@ -107,7 +107,7 @@ npx -y mcp-http-gateway --transport=sse --sse-port=11113 --config /path/to/tools
   "mcpServers": {
     "http-gateway": {
       "command": "npx",
-      "args": ["-y", "mcp-http-gateway", "--config", "/absolute/path/to/tools.json"]
+      "args": ["-y", "@lvdaxianer/mcp-http-gateway", "--config", "/absolute/path/to/tools.json"]
     }
   }
 }
