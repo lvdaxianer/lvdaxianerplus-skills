@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.5] - 2026-04-23
+
+### 稳定版（修复版）
+
+> 本版本修复了 SSE 模式下 Dashboard 不工作的问题，并更新了文档。
+
+### Fixed
+
+- 🐛 **修复 SSE 模式 Dashboard 不工作**
+  - 问题：SSE 模式下访问 Dashboard 返回 "Not found"
+  - 原因：SSE HTTP Server 只处理 /sse 和 /message 路径，未注册 Dashboard 路由
+  - 解决：在 SSE 模式下启动独立的 Dashboard HTTP Server（端口 = SSE 端口 - 1）
+  - 端口分配：SSE MCP 端口默认 11114，Dashboard 自动使用 11113
+
+### Changed
+
+- 📝 **文档更新**
+  - README 添加端口分配表格，区分 STDIO 和 SSE 模式
+  - 添加多种确认实际端口的方法（控制台日志、页面徽章、命令行查询、健康检查）
+  - 更新 CLI 参数表格，添加默认值列
+  - 更新 SSE 配置示例，端口从 11113 改为 11114
+
+---
+
 ## [1.0.3] - 2026-04-23
 
 ### 稳定版（修复版）

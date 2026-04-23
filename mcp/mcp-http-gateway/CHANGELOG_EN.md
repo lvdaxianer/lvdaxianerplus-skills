@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.5] - 2026-04-23
+
+### Stable Version (Bug Fix Release)
+
+> This version fixes the SSE mode Dashboard issue and updates documentation.
+
+### Fixed
+
+- 🐛 **Fix SSE Mode Dashboard Not Working**
+  - Issue: Dashboard returns "Not found" in SSE mode
+  - Cause: SSE HTTP Server only handles /sse and /message paths, Dashboard routes not registered
+  - Solution: Start independent Dashboard HTTP Server in SSE mode (port = SSE port - 1)
+  - Port allocation: SSE MCP port defaults to 11114, Dashboard uses 11113
+
+### Changed
+
+- 📝 **Documentation Updates**
+  - README adds port allocation table, distinguishing STDIO and SSE modes
+  - Add multiple methods to confirm actual port (console log, page badge, command line query, health check)
+  - Update CLI parameters table with default values column
+  - Update SSE config examples, port changed from 11113 to 11114
+
+---
+
 ## [1.0.3] - 2026-04-23
 
 ### Stable Version (Bug Fix Release)
