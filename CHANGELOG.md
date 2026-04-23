@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Changed
+- 同步 Dashboard 文档变更记录 (7e4b831)
+
 - 添加 Dashboard 使用说明和端口确认方法 (df51c47)
 
 ### Changed
