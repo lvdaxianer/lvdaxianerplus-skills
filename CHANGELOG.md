@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- 修复 Dashboard 模板路径和构建脚本 (a149602)
+
+- 同步 v1.0.3 发布变更记录 (deff5f1)
+
 ### Changed
 - 发布 v1.0.3 稳定版 (02d9448)
 

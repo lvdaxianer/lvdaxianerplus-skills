@@ -25,6 +25,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import type { Config } from '../config/types.js';
 import { logger } from '../middleware/logger.js';
 import { registerListToolsHandler, registerCallToolHandler } from './server-handlers.js';
+import { startHttpServer, closeHttpServer } from '../routes/http-server.js';
 import http from 'http';
 
 // 导入 Server 类型用于 SSE 连接存储
@@ -159,13 +160,30 @@ export async function startStdioServer(config: Config): Promise<void> {
  * - GET /sse：创建 transport，建立 SSE 流，返回 endpoint URL（含 sessionId）
  * - POST /message?sessionId=xxx：接收客户端消息
  *
+ * HTTP Server：
+ * - SSE 端口（ssePort）：处理 /sse 和 /message（MCP 协议）
+ * - Dashboard 端口（ssePort - 1）：处理 Dashboard、Health、Metrics 等
+ *
  * @param config - 工具配置
- * @param ssePort - SSE 服务端口（默认 11113）
+ * @param ssePort - SSE 服务端口（默认 11114）
  *
  * @author lvdaxianerplus
  * @date 2026-04-22
  */
-export async function startSseServer(config: Config, ssePort: number = 11113): Promise<void> {
+export async function startSseServer(config: Config, ssePort: number = 11114): Promise<void> {
+  // ===== 启动 Dashboard HTTP Server（独立端口）=====
+  // Dashboard HTTP Server 使用 SSE 端口减 1（如 11114 → 11113）
+  const httpPort = ssePort - 1;
+
+  logger.info('[SSE] 启动 Dashboard HTTP Server', { httpPort });
+
+  // 条件注释：调用 startHttpServer 启动 Dashboard HTTP Server
+  // 功能：提供 Dashboard、Health、Metrics、Cache 等管理接口
+  await startHttpServer({ config, port: httpPort });
+
+  logger.info('[SSE] Dashboard HTTP Server 已启动', { httpPort, dashboardUrl: `http://localhost:${httpPort}/dashboard` });
+
+  // ===== 启动 SSE Server（MCP 协议）=====
   // 存储活跃的 SSE 连接（sessionId -> { server, transport }）
   const activeConnections: Map<string, { server: Server; transport: SSEServerTransport }> = new Map();
 
