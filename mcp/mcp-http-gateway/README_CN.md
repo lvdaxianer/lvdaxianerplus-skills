@@ -74,7 +74,7 @@ Dashboard 提供实时监控功能：
 
 ```bash
 cd mcp/mcp-http-gateway
-node dist/cli.js --transport=sse --sse-port=11113 test.tools.filtered.json
+node dist/cli.cjs --transport=sse --sse-port=11113 test.tools.filtered.json
 ```
 
 #### npx 方式配置
