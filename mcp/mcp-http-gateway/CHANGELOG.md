@@ -15,6 +15,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.3] - 2026-04-23
+
+### 稳定版（修复版）
+
+> 本版本修复了多个关键问题，增强用户体验和稳定性。
+
+### Added
+
+- ✨ **端口冲突自动处理**
+  - 检测端口占用情况
+  - 自动杀死同类 node 进程（同类进程清理）
+  - 自动尝试下一个可用端口（最多 10 个）
+  - Dashboard 页面顶部显示当前端口徽章
+
+### Changed
+
+- 📦 **构建优化**
+  - 使用 esbuild 打包为单文件 CommonJS（dist/cli.cjs）
+  - 移除 tsc 编译，减小包体积
+  - 添加 shebang 支持 npx 直接执行
+
+- 📝 **文档更新**
+  - 添加 Dashboard 使用说明（如何查看、端口确认方法）
+  - 添加 npm 发布检查清单（NPM_PUBLISH_CHECKLIST.md）
+  - 修复 README 中 cli.js → cli.cjs 引用
+
+### Fixed
+
+- 🐛 **修复 npx 执行失败**
+  - 添加 CLI shebang（`#!/usr/bin/env node`）
+  - 移除无效的 package.json 字段（main、types、exports）
+  - 修复 import.meta 在 CJS 格式下不可用问题
+
+---
+
 ## [1.0.0] - 2026-04-23
 
 ### 首次正式发布（稳定版）

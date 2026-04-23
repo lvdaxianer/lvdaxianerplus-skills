@@ -15,6 +15,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.3] - 2026-04-23
+
+### Stable Version (Bug Fix Release)
+
+> This version fixes multiple critical issues and enhances user experience and stability.
+
+### Added
+
+- ✨ **Automatic Port Conflict Handling**
+  - Detect port usage status
+  - Automatically kill old node processes (same-type process cleanup)
+  - Automatically try next available port (up to 10 attempts)
+  - Dashboard page top shows current port badge
+
+### Changed
+
+- 📦 **Build Optimization**
+  - Use esbuild to bundle into single CommonJS file (dist/cli.cjs)
+  - Remove tsc compilation, reduce package size
+  - Add shebang support for direct npx execution
+
+- 📝 **Documentation Updates**
+  - Add Dashboard usage instructions (how to view, port confirmation methods)
+  - Add npm publish checklist (NPM_PUBLISH_CHECKLIST.md)
+  - Fix cli.js → cli.cjs references in README
+
+### Fixed
+
+- 🐛 **Fix npx Execution Failure**
+  - Add CLI shebang (`#!/usr/bin/env node`)
+  - Remove invalid package.json fields (main, types, exports)
+  - Fix import.meta unavailable in CJS format
+
+---
+
 ## [1.0.0] - 2026-04-23
 
 ### First Official Release (Stable Version)
