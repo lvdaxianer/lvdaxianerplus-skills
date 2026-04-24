@@ -15,6 +15,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.6] - 2026-04-24
+
+### Stable Version (Feature Enhancement)
+
+> This version adds Dual mode startup, fixes circuit breaker, SSE CORS and other issues, documentation simplified to focus on core content.
+
+### Added
+
+- ✨ **Dual Mode Startup**
+  - Support `--transport=dual` to start both STDIO + SSE transport modes simultaneously
+  - Claude Code connects via STDIO, VSCode/other tools connect via SSE at the same time
+  - Port allocation: SSE port `--sse-port` (default 11114), Dashboard port `--http-port` (default 11115)
+
+### Fixed
+
+- 🐛 **Circuit Breaker Config Persistence**
+  - Circuit breaker config persisted to SQLite database
+  - Config priority: CLI params > SQLite database > Config file > Default values
+  - Dashboard correctly displays circuit breaker status and failure count
+
+- 🐛 **SSE Server CORS Support**
+  - Added CORS response headers, support MCP Inspector Proxy connection
+  - SSE Server listens on `0.0.0.0`, support external access
+
+- 🐛 **Mock Call Logging**
+  - Mock call success/failure logged to SQLite
+  - Dashboard metrics correctly displays Mock call statistics
+
+- 🐛 **Dual Mode HTTP Server Port Fix**
+  - Dual mode correctly returns actual HTTP port used
+  - Dashboard access URL correctly displayed
+
+### Changed
+
+- 📝 **Documentation Simplified**
+  - README.md and README_CN.md simplified, focus on Dual mode and safety usage
+  - Added config documentation links (CONFIG.md / CONFIG_EN.md)
+
+---
+
 ## [1.0.5] - 2026-04-23
 
 ### Stable Version (Bug Fix Release)

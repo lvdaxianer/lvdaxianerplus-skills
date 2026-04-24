@@ -15,6 +15,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.6] - 2026-04-24
+
+### 稳定版（功能增强版）
+
+> 本版本新增 Dual 双模式启动，修复熔断器、SSE CORS 等多项问题，文档精简聚焦核心内容。
+
+### Added
+
+- ✨ **新增 Dual 双模式启动**
+  - 支持 `--transport=dual` 同时启动 STDIO + SSE 两种传输模式
+  - Claude Code 可通过 STDIO 连接，VSCode/其他工具可同时通过 SSE 连接
+  - 端口分配：SSE 端口 `--sse-port`（默认 11114），Dashboard 端口 `--http-port`（默认 11115）
+
+### Fixed
+
+- 🐛 **熔断器配置持久化**
+  - 熔断器配置持久化到 SQLite 数据库
+  - 配置优先级：CLI 参数 > SQLite 数据库 > 配置文件 > 默认值
+  - Dashboard 正确显示熔断器状态和失败次数
+
+- 🐛 **SSE Server CORS 支持**
+  - 添加 CORS 响应头，支持 MCP Inspector Proxy 连接
+  - SSE Server 监听 `0.0.0.0`，支持外部访问
+
+- 🐛 **Mock 调用日志记录**
+  - Mock 调用成功/失败记录到 SQLite
+  - Dashboard metrics 正确显示 Mock 调用统计
+
+- 🐛 **Dual 模式 HTTP Server 端口修复**
+  - Dual 模式正确返回实际使用的 HTTP 端口
+  - Dashboard 访问地址正确显示
+
+### Changed
+
+- 📝 **文档精简**
+  - README.md 和 README_CN.md 简化，聚焦 Dual 模式和安全使用
+  - 添加配置文档链接（CONFIG.md / CONFIG_EN.md）
+
+---
+
 ## [1.0.5] - 2026-04-23
 
 ### 稳定版（修复版）
