@@ -556,6 +556,8 @@ timestamp [thread-name] level class-name:line-number - message
 - [✅/❌/不适用] **集合容量**：创建集合时指定合理的初始容量，避免多次扩容
 - [✅/❌/不适用] **字符串拼接**：循环内禁止使用 `+` 拼接，使用 StringBuilder/join 等方法
 - [✅/❌/不适用] **equals/hashCode**：重写 equals 必须同时重写 hashCode，保持契约一致
+- [✅/❌/不适用] **无未使用导入**：所有 import 必须被使用，无冗余导入
+- [✅/❌/不适用] **无未使用变量**：所有局部变量、成员变量必须被使用，无冗余声明
 
 ### 13.3. 批量处理（强制）
 
@@ -611,6 +613,13 @@ timestamp [thread-name] level class-name:line-number - message
 
 - [✅/❌/不适用] **else 强制**：所有 if 语句**必须**包含 else 分支，不允许存在单独 if 而无 else
 - [✅/❌/不适用] **合理值设置**：如果 if 分支是设置值的操作，else 分支必须设置合理值（初期值、默认值、空值、备选值、降级值等）
+
+### 13.10. 未使用导入与变量清理规范（强制）
+
+- [✅/❌/不适用] **无未使用导入**：所有 import 语句必须被使用，不得存在冗余导入
+- [✅/❌/不适用] **无未使用变量**：所有局部变量、成员变量必须被使用，不得存在冗余声明
+
+> **代码示例（正确/错误示例）**：详见 [references/unused-imports-variables.md](references/unused-imports-variables.md)
 
 ---
 
