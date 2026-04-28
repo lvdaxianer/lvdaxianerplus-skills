@@ -128,6 +128,78 @@ CLI 参数 > SQLite 数据库 > 配置文件 > 默认值
 
 ---
 
+## Claude Code 使用
+
+Claude Code 可以通过 npx 自动安装并使用：
+
+### 1. 全局安装（推荐）
+
+```bash
+npm install -g @lvdaxianer/mcp-http-gateway
+```
+
+### 2. Claude Code MCP 配置
+
+在 Claude Code 设置中添加 MCP Server：
+
+**方式一：STDIO 模式（Claude Code 默认，自动管理进程）**
+
+Claude Code 会自动启动进程，**无需手动启动服务**。
+
+```json
+{
+  "mcpServers": {
+    "http-gateway": {
+      "command": "npx",
+      "args": ["-y", "@lvdaxianer/mcp-http-gateway", "--config", "/absolute/path/to/tools.json"]
+    }
+  }
+}
+```
+
+**方式二：SSE 模式（持久连接，需手动启动）**
+
+需要先手动启动服务，Claude Code 通过 SSE 连接。
+
+```json
+{
+  "mcpServers": {
+    "http-gateway": {
+      "type": "sse",
+      "url": "http://localhost:11114/sse",
+      "description": "HTTP API 网关"
+    }
+  }
+}
+```
+
+启动服务：
+```bash
+npx -y @lvdaxianer/mcp-http-gateway --transport=sse --config=./tools.json
+```
+
+**方式三：Dual 模式（同时支持 Claude Code + VSCode，需手动启动）**
+
+需要先手动启动服务，同时支持 STDIO 和 SSE 连接。
+
+```json
+{
+  "mcpServers": {
+    "http-gateway": {
+      "type": "sse",
+      "url": "http://localhost:11114/sse"
+    }
+  }
+}
+```
+
+启动服务：
+```bash
+npx -y @lvdaxianer/mcp-http-gateway --transport=dual --config=./tools.json
+```
+
+---
+
 ## 快速开始
 
 ```bash

@@ -128,6 +128,78 @@ Request Failed → Cache Fallback (ignore TTL) → Mock Fallback → Return Erro
 
 ---
 
+## Using with Claude Code
+
+Claude Code can automatically install and use via npx:
+
+### 1. Global Install (Recommended)
+
+```bash
+npm install -g @lvdaxianer/mcp-http-gateway
+```
+
+### 2. Claude Code MCP Configuration
+
+Add MCP Server in Claude Code settings:
+
+**Option 1: STDIO Mode (Claude Code Default, Auto-managed Process)**
+
+Claude Code automatically manages the process, **no manual startup needed**.
+
+```json
+{
+  "mcpServers": {
+    "http-gateway": {
+      "command": "npx",
+      "args": ["-y", "@lvdaxianer/mcp-http-gateway", "--config", "/absolute/path/to/tools.json"]
+    }
+  }
+}
+```
+
+**Option 2: SSE Mode (Persistent Connection, Manual Startup Required)**
+
+Start the service manually first, then Claude Code connects via SSE.
+
+```json
+{
+  "mcpServers": {
+    "http-gateway": {
+      "type": "sse",
+      "url": "http://localhost:11114/sse",
+      "description": "HTTP API Gateway"
+    }
+  }
+}
+```
+
+Start the service:
+```bash
+npx -y @lvdaxianer/mcp-http-gateway --transport=sse --config=./tools.json
+```
+
+**Option 3: Dual Mode (Claude Code + VSCode Together, Manual Startup Required)**
+
+Start the service manually, supports both STDIO and SSE connections.
+
+```json
+{
+  "mcpServers": {
+    "http-gateway": {
+      "type": "sse",
+      "url": "http://localhost:11114/sse"
+    }
+  }
+}
+```
+
+Start the service:
+```bash
+npx -y @lvdaxianer/mcp-http-gateway --transport=dual --config=./tools.json
+```
+
+---
+
 ## Quick Start
 
 ```bash
